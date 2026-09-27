@@ -1,0 +1,49 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-build-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        env:
+          # Placeholder values - a real build never needs real secrets;
+          # env.js only validates that these are *present*, not that
+          # they point at anything real. Production values are supplied
+          # by your actual deploy pipeline, never committed here.
+          VITE_API_BASE_URL: https://example.invalid
+          VITE_COGNITO_DOMAIN: example.auth.us-east-1.amazoncognito.com
+          VITE_COGNITO_CLIENT_ID: ci-placeholder
+          VITE_COGNITO_REDIRECT_URI: https://example.invalid/auth/callback
+          VITE_COGNITO_LOGOUT_REDIRECT_URI: https://example.invalid/
+        run: npm run build
+
+      - name: npm audit (fails on any known vulnerability)
+        run: npm audit --audit-level=low
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist/
+          retention-days: 7

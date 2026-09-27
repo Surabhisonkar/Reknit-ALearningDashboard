@@ -1,0 +1,13 @@
+target/
+bin/
+*.class
+.idea/
+*.iml
+.vscode/
+.DS_Store
+*.log
+run-log*.txt
+hs_err_pid*.log
+
+# Local secrets - copy set-env.example.ps1 to set-env.ps1 and fill it in
+set-env.ps1

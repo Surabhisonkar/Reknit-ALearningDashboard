@@ -1,0 +1,145 @@
+name: Backend CI
+
+# Runs on every push/PR touching the backend. Uses real MySQL and Redis
+# service containers (not mocks) so a green run means the same things
+# your local run-log confirmed: the app actually compiles and its schema
+# actually validates against a real database - not just "no obvious
+# syntax errors".
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: learning_dashboard
+          MYSQL_USER: learning_dashboard
+          MYSQL_PASSWORD: learning_dashboard
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
+      # Java 21 is used here rather than 25 because GitHub-hosted runners'
+      # available Temurin distributions lag behind the very newest LTS by
+      # a few months; the pom.xml's <java.version> controls what actually
+      # gets compiled against, so this doesn't have to track your local
+      # machine's JDK exactly. Bump this once hosted 25 images are common.
+
+      - name: Wait for MySQL to accept connections
+        run: |
+          for i in $(seq 1 30); do
+            mysqladmin ping -h127.0.0.1 -P3306 -uroot -proot --silent && break
+            echo "Waiting for MySQL... ($i/30)"
+            sleep 2
+          done
+
+      - name: Compile
+        run: mvn -B -ntp clean compile
+
+      - name: Run unit + schema-validation tests
+        env:
+          DB_URL: "jdbc:mysql://127.0.0.1:3306/learning_dashboard?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+          DB_USERNAME: learning_dashboard
+          DB_PASSWORD: learning_dashboard
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: "6379"
+          # Deliberately blank/fake - no test here should be making a real
+          # outbound call to Anthropic/Gemini/OpenAI. If a test needs a
+          # provider, it must mock TextGenerationProvider/etc., never call
+          # a real adapter class with a real key from CI.
+          ANTHROPIC_API_KEY: "test-key-not-real"
+          GEMINI_API_KEY: "test-key-not-real"
+          OPENAI_API_KEY: "test-key-not-real"
+          COGNITO_ISSUER_URI: "https://example-not-a-real-pool.invalid"
+          CORS_ALLOWED_ORIGINS: "http://localhost:5173"
+        run: mvn -B -ntp test
+
+      - name: Package (skip tests, already ran above)
+        run: mvn -B -ntp package -DskipTests
+
+      - name: Upload jar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: backend/target/*.jar
+          retention-days: 7
+
+  dependency-check:
+    runs-on: ubuntu-latest
+    # Separate job so a flaky/slow vulnerability-DB download never blocks
+    # the build-and-test signal above from reporting.
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
+      - name: OWASP Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: "learning-dashboard-backend"
+          path: "backend"
+          format: "HTML"
+          # Fails the job on any dependency with a known CVE at HIGH
+          # severity or above (CVSS >= 7). Tune this threshold once you've
+          # triaged the first report - starting strict is easier to relax
+          # than starting loose and hoping someone tightens it later.
+          args: >
+            --failOnCVSS 7
+            --enableRetired
+
+      - name: Upload dependency-check report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: reports/
+          retention-days: 30

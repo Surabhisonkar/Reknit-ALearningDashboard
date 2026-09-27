@@ -1,0 +1,45 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.secret
+*.credentials
+credentials.json
+service-account*.json
+
+# Build and dependency output
+**/target/
+**/node_modules/
+**/dist/
+**/build/
+**/.vite/
+**/coverage/
+*.class
+*.jar
+*.war
+*.ear
+
+# Logs and temporary files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tmp
+*.bak
+*~
+
+# Local IDE and operating system files
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+Desktop.ini
