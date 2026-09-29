@@ -1,5 +1,8 @@
 package com.learningdashboard.backend.web;
 
+import com.learningdashboard.backend.folder.FolderLabel;
+import com.learningdashboard.backend.folder.FolderSummary;
+import com.learningdashboard.backend.web.dto.FolderResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learningdashboard.backend.concept.Concept;
@@ -34,12 +37,15 @@ public class ResponseMapper {
                 job.getUpdatedAt());
     }
 
-    public ConceptResponse toConceptResponse(Concept concept) {
+    /** {@code folder} is null for an unfiled concept. */
+    public ConceptResponse toConceptResponse(Concept concept, FolderLabel folder) {
         return new ConceptResponse(
                 concept.getId(),
                 concept.getTitle(),
                 concept.getSummary(),
-                concept.getFolder(),
+                folder != null ? folder.name() : "",
+                folder != null ? folder.id() : null,
+                folder != null ? folder.color().key() : null,
                 concept.getVisualizationType(),
                 parseOrNull(concept.getVisualizationPayload()),
                 concept.getCurrentVersion(),
@@ -59,6 +65,12 @@ public class ResponseMapper {
                 version.getVisualizationType(),
                 parseOrNull(version.getVisualizationPayload()),
                 version.getCreatedAt());
+    }
+
+    public FolderResponse toFolderResponse(FolderSummary summary) {
+        var folder = summary.folder();
+        return new FolderResponse(folder.getId(), folder.getName(), folder.getColor(), summary.conceptCount(),
+                folder.getCreatedAt());
     }
 
     public RelatedConceptResponse toRelatedConceptResponse(RelatedConcept related) {

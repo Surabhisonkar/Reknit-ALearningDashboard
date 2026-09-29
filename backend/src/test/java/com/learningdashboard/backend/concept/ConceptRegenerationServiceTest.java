@@ -22,7 +22,7 @@ class ConceptRegenerationServiceTest {
     @Test
     void appendsTheNextVersionNumber() {
         UUID userId = UUID.randomUUID();
-        Concept concept = new Concept(userId, "Old", "s", "", "diagram", "{}", 1, null);
+        Concept concept = new Concept(userId, "Old", "s", null, "diagram", "{}", 1, null);
         concept.applyNewVersion(2, "Old", "s", "diagram", "{}", 1); // concept already has 2 versions
         ConceptDraft draft = new ConceptDraft(UUID.randomUUID(), null, "New", "s2", "", "diagram", "{}", 1, List.of());
 

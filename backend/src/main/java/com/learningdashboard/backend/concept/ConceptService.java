@@ -11,16 +11,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class ConceptService {
+public class ConceptService implements ConceptFolderContents {
 
     private static final String ANIMATION_TYPE = "animation";
 
     private final ConceptRepository conceptRepository;
     private final ConceptVersionRepository conceptVersionRepository;
+    private final FolderLookup folderLookup;
 
-    public ConceptService(ConceptRepository conceptRepository, ConceptVersionRepository conceptVersionRepository) {
+    public ConceptService(ConceptRepository conceptRepository, ConceptVersionRepository conceptVersionRepository,
+                          FolderLookup folderLookup) {
         this.conceptRepository = conceptRepository;
         this.conceptVersionRepository = conceptVersionRepository;
+        this.folderLookup = folderLookup;
     }
 
     @Transactional
@@ -56,16 +59,48 @@ public class ConceptService {
                 .orElseThrow(() -> new NotFoundException("Concept not found: " + conceptId));
     }
 
-    public List<Concept> listForUser(UUID userId, String folder) {
-        return (folder == null || folder.isBlank())
-                ? conceptRepository.findByUserIdOrderByCreatedAtDesc(userId)
-                : conceptRepository.findByUserIdAndFolderOrderByCreatedAtDesc(userId, folder);
+    /**
+     * The user's concepts, newest first. {@code folderName} (optional) filters
+     * by folder name, case-insensitively as before; an unknown name matches
+     * nothing, exactly like the old string filter did.
+     */
+    public List<Concept> listForUser(UUID userId, String folderName) {
+        if (folderName == null || folderName.isBlank()) {
+            return conceptRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        }
+        return folderLookup.findIdByName(userId, folderName)
+                .map(folderId -> conceptRepository.findByUserIdAndFolderIdOrderByCreatedAtDesc(userId, folderId))
+                .orElse(List.of());
     }
 
     @Transactional
     public void deleteOwnedConcept(UUID conceptId, UUID userId) {
         requireOwnedConcept(conceptId, userId); // 404s for both "doesn't exist" and "not yours"
         conceptRepository.deleteByIdAndUserId(conceptId, userId);
+    }
+
+    /**
+     * Files an owned concept in one of the user's folders, or unfiles it
+     * with {@code folderId == null}. Someone else's (or a missing) folder
+     * 404s, the same as a missing concept - no existence leak.
+     */
+    @Transactional
+    public Concept moveOwnedConcept(UUID conceptId, UUID userId, UUID folderId) {
+        Concept concept = requireOwnedConcept(conceptId, userId);
+        if (folderId != null && !folderLookup.isOwnedBy(folderId, userId)) {
+            throw new NotFoundException("Folder not found: " + folderId);
+        }
+        concept.moveToFolder(folderId);
+        return conceptRepository.save(concept);
+    }
+
+    /** {@inheritDoc} Rows cascade in the database: versions, embeddings and artifact rows go with each concept. */
+    @Override
+    @Transactional
+    public int deleteAllInFolder(UUID userId, UUID folderId) {
+        List<Concept> inFolder = conceptRepository.findByUserIdAndFolderIdOrderByCreatedAtDesc(userId, folderId);
+        conceptRepository.deleteAll(inFolder);
+        return inFolder.size();
     }
 
     @Transactional
@@ -83,10 +118,16 @@ public class ConceptService {
      * cursor - the client is the source of truth for what it's already
      * seen, which keeps this endpoint stateless like the rest of the API.
      */
-    public List<Concept> randomSparkFeed(UUID userId, String folder, Set<UUID> excludeIds, int limit) {
-        List<Concept> pool = (folder == null || folder.isBlank())
-                ? conceptRepository.findByUserIdAndVisualizationType(userId, ANIMATION_TYPE)
-                : conceptRepository.findByUserIdAndFolderAndVisualizationType(userId, folder, ANIMATION_TYPE);
+    public List<Concept> randomSparkFeed(UUID userId, String folderName, Set<UUID> excludeIds, int limit) {
+        List<Concept> pool;
+        if (folderName == null || folderName.isBlank()) {
+            pool = conceptRepository.findByUserIdAndVisualizationType(userId, ANIMATION_TYPE);
+        } else {
+            pool = folderLookup.findIdByName(userId, folderName)
+                    .map(folderId -> conceptRepository.findByUserIdAndFolderIdAndVisualizationType(
+                            userId, folderId, ANIMATION_TYPE))
+                    .orElse(List.of());
+        }
 
         List<Concept> shuffled = new ArrayList<>(pool);
         Collections.shuffle(shuffled);
@@ -95,10 +136,6 @@ public class ConceptService {
                 .filter(concept -> !excludeIds.contains(concept.getId()))
                 .limit(limit)
                 .toList();
-    }
-
-    public List<String> listFoldersForUser(UUID userId) {
-        return conceptRepository.findDistinctNonEmptyFoldersByUserId(userId);
     }
 
     /**

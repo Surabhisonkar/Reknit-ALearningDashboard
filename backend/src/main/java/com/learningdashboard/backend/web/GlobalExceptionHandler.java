@@ -5,6 +5,8 @@ import com.learningdashboard.backend.concept.DuplicateTitleException;
 import com.learningdashboard.backend.common.exception.ForbiddenException;
 import com.learningdashboard.backend.common.exception.GenerationException;
 import com.learningdashboard.backend.common.exception.NotFoundException;
+import com.learningdashboard.backend.folder.DuplicateFolderNameException;
+import com.learningdashboard.backend.folder.InvalidFolderRequestException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -48,6 +50,20 @@ public class GlobalExceptionHandler {
     }
 
     /** Confirm-save on a job that isn't a saveable draft -> 409 (not ready) or 410 (expired). Messages are ours, never provider text. */
+    @ExceptionHandler(DuplicateFolderNameException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicateFolderName(DuplicateFolderNameException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("error", "A folder with this name already exists.");
+        body.put("code", "DUPLICATE_FOLDER_NAME");
+        body.put("name", ex.getName());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    @ExceptionHandler(InvalidFolderRequestException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidFolderRequest(InvalidFolderRequestException ex) {
+        return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+    }
+
     @ExceptionHandler(DraftNotSaveableException.class)
     public ResponseEntity<Map<String, Object>> handleDraftNotSaveable(DraftNotSaveableException ex) {
         boolean expired = ex.getReason() == DraftNotSaveableException.Reason.EXPIRED;

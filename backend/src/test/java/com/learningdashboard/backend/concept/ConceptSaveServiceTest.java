@@ -23,10 +23,14 @@ class ConceptSaveServiceTest {
     private final ConceptDraftSource draftSource = mock(ConceptDraftSource.class);
     private final ConceptService conceptService = mock(ConceptService.class);
     private final ConceptVersionWriter versionWriter = mock(ConceptVersionWriter.class);
-    private final ConceptSaveService service = new ConceptSaveService(draftSource, conceptService, versionWriter);
+    private final FolderAssigner folderAssigner = mock(FolderAssigner.class);
+    private final ConceptSaveService service =
+            new ConceptSaveService(draftSource, conceptService, versionWriter, folderAssigner);
 
     private final UUID userId = UUID.randomUUID();
     private final UUID jobId = UUID.randomUUID();
+    private final UUID biologyFolderId = UUID.randomUUID();
+    private final UUID plantsFolderId = UUID.randomUUID();
     private final ConceptDraft draft = new ConceptDraft(jobId, null, "Photosynthesis", "summary", "Biology",
             "mind_map", "{\"type\":\"mind_map\",\"version\":1}", 1, List.of());
 
@@ -35,10 +39,12 @@ class ConceptSaveServiceTest {
         when(conceptService.save(any(Concept.class))).thenAnswer(inv -> inv.getArgument(0));
         when(versionWriter.write(any(Concept.class), anyInt(), any(ConceptDraft.class))).thenAnswer(inv -> inv.getArgument(0));
         when(draftSource.claim(jobId, userId)).thenReturn(new DraftClaim(draft, Optional.empty()));
+        when(folderAssigner.findOrCreate(userId, "Biology")).thenReturn(Optional.of(biologyFolderId));
+        when(folderAssigner.findOrCreate(userId, "Plants")).thenReturn(Optional.of(plantsFolderId));
     }
 
     private Concept existing(String title) {
-        return new Concept(userId, title, "old", "", "mind_map", "{}", 1, null);
+        return new Concept(userId, title, "old", null, "mind_map", "{}", 1, null);
     }
 
     @Test
@@ -47,7 +53,7 @@ class ConceptSaveServiceTest {
 
         assertThat(outcome.created()).isTrue();
         assertThat(outcome.concept().getTitle()).isEqualTo("Photosynthesis");
-        assertThat(outcome.concept().getFolder()).isEqualTo("Biology");
+        assertThat(outcome.concept().getFolderId()).isEqualTo(biologyFolderId);
         verify(versionWriter).write(any(Concept.class), eq(1), eq(draft));
         verify(draftSource).markSaved(jobId, outcome.concept().getId());
     }
@@ -101,7 +107,28 @@ class ConceptSaveServiceTest {
     @Test
     void folderOverrideWinsOverTheSuggestion() {
         SaveOutcome outcome = service.save(new SaveConceptCommand(jobId, userId, null, "Plants", null));
-        assertThat(outcome.concept().getFolder()).isEqualTo("Plants");
+        assertThat(outcome.concept().getFolderId()).isEqualTo(plantsFolderId);
+    }
+
+    @Test
+    void aBlankFolderOverrideSavesTheConceptUnfiled() {
+        SaveOutcome outcome = service.save(new SaveConceptCommand(jobId, userId, null, "  ", null));
+        assertThat(outcome.concept().getFolderId()).isNull();
+        verify(folderAssigner, never()).findOrCreate(any(), any());
+    }
+
+    @Test
+    void theFolderNameIsTrimmedBeforeTheLookup() {
+        service.save(new SaveConceptCommand(jobId, userId, null, "  Plants  ", null));
+        verify(folderAssigner).findOrCreate(userId, "Plants");
+    }
+
+    @Test
+    void aRejectedDuplicateNeverCreatesAFolder() {
+        when(conceptService.findTitleCollision(userId, "Photosynthesis", null)).thenReturn(Optional.of(existing("photosynthesis")));
+        assertThatThrownBy(() -> service.save(new SaveConceptCommand(jobId, userId, null, null, DuplicateTitlePolicy.REJECT)))
+                .isInstanceOf(DuplicateTitleException.class);
+        verify(folderAssigner, never()).findOrCreate(any(), any());
     }
 
     @Test

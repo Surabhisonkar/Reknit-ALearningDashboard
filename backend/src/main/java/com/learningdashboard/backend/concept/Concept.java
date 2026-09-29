@@ -39,8 +39,10 @@ public class Concept {
     @Column(nullable = false, columnDefinition = "text")
     private String summary;
 
-    @Column(nullable = false, length = 120)
-    private String folder = "";
+    /** The folder this concept is filed in, or null when unfiled. Folder-level data lives in the folder module. */
+    @Column(name = "folder_id")
+    @JdbcTypeCode(SqlTypes.CHAR)
+    private UUID folderId;
 
     @Column(name = "visualization_type", nullable = false, length = 32)
     private String visualizationType;
@@ -77,13 +79,13 @@ public class Concept {
 
     protected Concept() { }
 
-    public Concept(UUID userId, String title, String summary, String folder, String visualizationType,
+    public Concept(UUID userId, String title, String summary, UUID folderId, String visualizationType,
                    String visualizationPayload, int visualizationVersion, UUID sourceExplainJobId) {
         this.id = UUID.randomUUID();
         this.userId = userId;
         this.title = title;
         this.summary = summary;
-        this.folder = folder == null ? "" : folder;
+        this.folderId = folderId;
         this.visualizationType = visualizationType;
         this.visualizationPayload = visualizationPayload;
         this.visualizationVersion = visualizationVersion;
@@ -95,12 +97,17 @@ public class Concept {
         this.title = newTitle;
     }
 
+    /** Files this concept in another folder, or unfiles it with null. Ownership of the folder is checked by the caller. */
+    public void moveToFolder(UUID newFolderId) {
+        this.folderId = newFolderId;
+    }
+
     /**
      * Called once a regenerate's new {@code concept_versions} row is
      * finalized: replaces this row's denormalized cache (title/summary/
      * visualizationType/visualizationPayload/visualizationVersion) with
      * the new version's content and advances {@code currentVersion} to
-     * match. Deliberately never touches {@code folder} - folder is
+     * match. Deliberately never touches {@code folderId} - the folder is
      * concept-level metadata, not part of any one version's content, so a
      * regenerate never changes it.
      */
@@ -118,7 +125,7 @@ public class Concept {
     public UUID getUserId() { return userId; }
     public String getTitle() { return title; }
     public String getSummary() { return summary; }
-    public String getFolder() { return folder; }
+    public UUID getFolderId() { return folderId; }
     public String getVisualizationType() { return visualizationType; }
     public String getVisualizationPayload() { return visualizationPayload; }
     public int getVisualizationVersion() { return visualizationVersion; }

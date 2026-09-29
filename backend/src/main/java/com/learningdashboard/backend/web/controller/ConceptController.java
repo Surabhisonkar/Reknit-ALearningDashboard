@@ -7,6 +7,7 @@ import com.learningdashboard.backend.concept.SaveConceptCommand;
 import com.learningdashboard.backend.concept.SaveOutcome;
 import com.learningdashboard.backend.rag.EmbeddingIndexService;
 import com.learningdashboard.backend.security.CurrentUserService;
+import com.learningdashboard.backend.web.ConceptResponseAssembler;
 import com.learningdashboard.backend.web.ResponseMapper;
 import com.learningdashboard.backend.web.dto.ConceptRenameRequest;
 import com.learningdashboard.backend.web.dto.ConceptResponse;
@@ -39,23 +40,24 @@ public class ConceptController {
     private final EmbeddingIndexService embeddingIndexService;
     private final CurrentUserService currentUserService;
     private final ResponseMapper responseMapper;
+    private final ConceptResponseAssembler assembler;
 
     public ConceptController(ConceptService conceptService, ConceptSaveService conceptSaveService,
                               EmbeddingIndexService embeddingIndexService,
-                              CurrentUserService currentUserService, ResponseMapper responseMapper) {
+                              CurrentUserService currentUserService, ResponseMapper responseMapper,
+                              ConceptResponseAssembler assembler) {
         this.conceptService = conceptService;
         this.conceptSaveService = conceptSaveService;
         this.embeddingIndexService = embeddingIndexService;
         this.currentUserService = currentUserService;
         this.responseMapper = responseMapper;
+        this.assembler = assembler;
     }
 
     @GetMapping
     public List<ConceptResponse> list(@RequestParam(required = false) String folder) {
         var user = currentUserService.requireCurrentUser();
-        return conceptService.listForUser(user.getId(), folder).stream()
-                .map(responseMapper::toConceptResponse)
-                .toList();
+        return assembler.toResponses(user.getId(), conceptService.listForUser(user.getId(), folder));
     }
 
     /**
@@ -75,7 +77,7 @@ public class ConceptController {
                 request.getJobId(), user.getId(), request.getTitle(), request.getFolder(),
                 DuplicateTitlePolicy.valueOf(request.getOnDuplicate())));
         return ResponseEntity.status(outcome.created() ? HttpStatus.CREATED : HttpStatus.OK)
-                .body(responseMapper.toConceptResponse(outcome.concept()));
+                .body(assembler.toResponse(outcome.concept()));
     }
 
     /**
@@ -93,22 +95,14 @@ public class ConceptController {
             @RequestParam(required = false, defaultValue = "10") int limit) {
         var user = currentUserService.requireCurrentUser();
         int safeLimit = Math.min(Math.max(limit, 1), 25); // guard against an accidentally huge request
-        return conceptService.randomSparkFeed(user.getId(), folder, parseUuidCsv(excludeIds), safeLimit).stream()
-                .map(responseMapper::toConceptResponse)
-                .toList();
-    }
-
-    /** Every distinct folder ("library") name the user has used - powers Spark's and Library's folder picker. */
-    @GetMapping("/folders")
-    public List<String> folders() {
-        var user = currentUserService.requireCurrentUser();
-        return conceptService.listFoldersForUser(user.getId());
+        return assembler.toResponses(user.getId(),
+                conceptService.randomSparkFeed(user.getId(), folder, parseUuidCsv(excludeIds), safeLimit));
     }
 
     @GetMapping("/{id}")
     public ConceptResponse get(@PathVariable UUID id) {
         var user = currentUserService.requireCurrentUser();
-        return responseMapper.toConceptResponse(conceptService.requireOwnedConcept(id, user.getId()));
+        return assembler.toResponse(conceptService.requireOwnedConcept(id, user.getId()));
     }
 
     /**
@@ -116,7 +110,7 @@ public class ConceptController {
      * version switcher - no payload, see the {id}/versions/{version}
      * route below for one version's full content. Spring resolves this
      * literal path ahead of {@code /{id}}, same as {@code /spark-feed}
-     * and {@code /folders} above.
+     * above (and {@code /folders}, now on ConceptFolderController).
      */
     @GetMapping("/{id}/versions")
     public List<ConceptVersionSummaryResponse> versions(@PathVariable UUID id) {
@@ -139,7 +133,7 @@ public class ConceptController {
     @PatchMapping("/{id}")
     public ConceptResponse rename(@PathVariable UUID id, @Valid @RequestBody ConceptRenameRequest request) {
         var user = currentUserService.requireCurrentUser();
-        return responseMapper.toConceptResponse(conceptService.renameOwnedConcept(id, user.getId(), request.getTitle()));
+        return assembler.toResponse(conceptService.renameOwnedConcept(id, user.getId(), request.getTitle()));
     }
 
     @DeleteMapping("/{id}")

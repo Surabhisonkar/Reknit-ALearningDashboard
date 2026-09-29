@@ -34,7 +34,7 @@ class RetrievalServiceRelatedToConceptTest {
     private final Concept sourdough = concept("Sourdough");        // distance 1.0
 
     private Concept concept(String title) {
-        return new Concept(userId, title, title + " summary", "", "mind_map", "{}", 1, null);
+        return new Concept(userId, title, title + " summary", null, "mind_map", "{}", 1, null);
     }
 
     @BeforeEach

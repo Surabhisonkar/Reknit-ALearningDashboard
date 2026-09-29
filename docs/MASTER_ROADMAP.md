@@ -22,7 +22,12 @@ validator + renderer mapping. AI-decided animation structure (no
 hardcoded scene template). Explain as a fully separate job/pipeline,
 structured output (analogy + example sections required). OpenAI added to
 the provider fallback chain. Asset lifecycle: S3 presigned upload/download
-URLs, orphan-expiry for abandoned artifacts.
+URLs. **Correction 2026-09-27: orphan expiry was never enforced.** `expires_at`
+is written but nothing reads it, there's no cleanup job and no bucket rule in
+the repo, and deleted concepts' and purged users' images stay in S3 (a GDPR
+gap). The fix is designed in `design/artifact-lifecycle-cleanup.md`. **Parked
+2026-09-28 so Phase 7 could go first**; its open questions are in
+`docs/open-questions/artifact-lifecycle.md`, and its migration becomes V4.
 
 ## Phase 2 — Frontend Migration & Structure ✅ DONE
 Centralized API client, Cognito Hosted UI login (hand-rolled PKCE),
@@ -93,14 +98,21 @@ assistant's sandbox, where Gemini is blocked). Save the five concepts in
 muscles ↔ posture both ways and keeps the controls out, and it prints a
 measured `RELATED_MAX_DISTANCE` to replace the 0.35 guess.
 
-## Phase 7 — Folders as Real Entities + Library Redesign 🟡 PARTIALLY MORE DONE THAN TRACKED
-**Correction**: `GET /api/concepts/folders` already exists
-(`ConceptService.listFoldersForUser`), returning distinct folder
-*strings* for a basic filter dropdown. This is **not** the real Folder
-entity design (no color, no rename, no per-user uniqueness) — that work
-is unchanged and still needed — but it means a minimal folder filter
-could ship on the frontend today, ahead of the full entity migration,
-if that sequencing is ever useful.
+## Phase 7 — Folders as Real Entities + Library Redesign 🟡 BUILT, WAITING ON THE USER'S RUN
+Built 2026-09-28 on `feature/phase-7-folders`; design and decisions in
+`backend/docs/design/phase-7-folders.md`. A new `folder` module (entity,
+palette colour, case-insensitive/accent-sensitive unique names) behind ports
+the `concept` module owns; `V3__folders.sql` backfills folders from the old
+strings, repoints `concepts.folder_id` and drops the string column behind a
+guard. New API: `/api/folders` (list with counts, create, rename/recolour,
+delete with a required `?concepts=unfile|delete`), `PUT /api/concepts/{id}/folder`.
+All existing concept routes keep their contract. Library redesign:
+colour-coded folder row (one line + "N more" on desktop), search, move /
+create / delete dialogs; shared `Modal`/`OverflowMenu` now manage keyboard focus.
+
+**Done means:** the user's `mvn test` passes, V3 has been dry-run on a copy
+of the database, and `frontend/scripts/verify-phase7-folders.mjs` passes on a
+test account (`backend/docs/VERIFY_PHASE_7.md`).
 
 ## Phase 8 — Spark Feed: UI/Design Only 🟡 MORE BUILT THAN TRACKED (backend AND frontend)
 **Correction 2026-09-27**: the frontend isn't a mockup either. `SparkPage`
@@ -199,7 +211,8 @@ the free tier, monitoring/alerting actually wired to something you'll see
 - **Phase 5 (A+B)**: delivered and verified in a browser against a mocked API. The backend compile and `mvn test` still need to be run on the user's machine.
 - **Phase 6**: steps 1–4 delivered. **Step 5 (the real-data product check) is the next action, and it's the user's to run** (see Phase 6 above).
 - **Cleanup release 2026-09-27**: 14 unused frontend files removed. The `AiProperties` embedding default was fixed to `gemini-embedding-001`, and `ARCHITECTURE_DIAGRAMS.md` was re-verified against the code. Current code: `learning-dashboard-release-2026-09-27.zip`.
-- **Next phase: Phase 7, Folders + Library redesign**, using the corrected design below. Confirm scope with the user before writing any code.
+- **Phase 7 (Folders + Library)**: built on `feature/phase-7-folders` (2026-09-28). Next action is the user's: `backend/docs/VERIFY_PHASE_7.md`.
+- **Then the artifact-lifecycle fix**, resumed from `docs/open-questions/artifact-lifecycle.md` (its migration is now V4).
 
 ## Decisions log
 | Date | Decision |
@@ -207,6 +220,10 @@ the free tier, monitoring/alerting actually wired to something you'll see
 | 2026-09-26 | **Standing rule:** confirm questions, scope and any deviation with the user *before* generating code. A better idea still gets asked, never just done. |
 | 2026-09-27 | Related concepts: own controller; stored-embedding query with a configurable cut-off. |
 | 2026-09-27 | `VisualizePipeline` (not `VisualizeJobHandler`) calls `VisualAssetGenerator`. The diagrams now match the code. |
+| 2026-09-28 | Phase 7 goes before the artifact-lifecycle fix; the lifecycle's open questions are parked in `docs/open-questions/`. |
+| 2026-09-28 | Phase 7 decisions (module, auto-filing, colours, name collation, API compatibility, delete modes, UI): see `backend/docs/design/phase-7-folders.md`. |
+| 2026-09-28 | Deliveries are a single git patch against `main` plus a list of changed files, not a full zip. Each phase is its own branch, tested by the user, then merged. Questions come as multiple choice mid-work, then work resumes. |
+| 2026-09-27 | Artifact lifecycle: an app sweeper plus an S3 tag/bucket-rule backstop (7 days), GDPR erasure in the same change, a dry-run reconcile, and `AccountPurgeJob` worker-only. Monorepo `backend/` + `frontend/`, CI moves to the root `.github/`. Extras deferred to `TECH_DEBT_TASKS.md` (T1–T5). |
 
 ## Corrected design for Phase 7 (Folders) — for when we get there
 

@@ -1,5 +1,5 @@
 package com.learningdashboard.backend.concept;
-
+import java.util.UUID;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,12 +20,14 @@ public class ConceptSaveService {
     private final ConceptDraftSource draftSource;
     private final ConceptService conceptService;
     private final ConceptVersionWriter versionWriter;
+    private final FolderAssigner folderAssigner;
 
     public ConceptSaveService(ConceptDraftSource draftSource, ConceptService conceptService,
-                              ConceptVersionWriter versionWriter) {
+                              ConceptVersionWriter versionWriter, FolderAssigner folderAssigner) {
         this.draftSource = draftSource;
         this.conceptService = conceptService;
         this.versionWriter = versionWriter;
+        this.folderAssigner = folderAssigner;
     }
 
     @Transactional
@@ -44,7 +46,8 @@ public class ConceptSaveService {
         }
 
         Concept concept = conceptService.save(new Concept(
-                command.userId(), draft.title(), draft.summary(), resolveFolder(draft, command.folderOverride()),
+                command.userId(), draft.title(), draft.summary(),
+                resolveFolderId(command.userId(), draft, command.folderOverride()),
                 draft.visualizationType(), draft.visualizationPayloadJson(), draft.payloadSchemaVersion(),
                 draft.sourceExplainJobId()));
         concept = versionWriter.write(concept, 1, draft);
@@ -64,9 +67,17 @@ public class ConceptSaveService {
         return draft.withTitle(truncate(titleOverride.trim(), MAX_TITLE_LENGTH));
     }
 
-    private String resolveFolder(ConceptDraft draft, String folderOverride) {
-        String folder = folderOverride != null ? folderOverride.trim() : draft.suggestedFolder().trim();
-        return truncate(folder, MAX_FOLDER_LENGTH);
+    /**
+     * Auto-files the new concept: the user's override wins, otherwise the
+     * AI's suggestion. The folder is found case-insensitively or created,
+     * inside this same transaction - so this runs only after the duplicate-
+     * title check, and a failed save leaves no stray folder behind. A blank
+     * name (override "" included) saves the concept unfiled.
+     */
+    private UUID resolveFolderId(UUID userId, ConceptDraft draft, String folderOverride) {
+        String raw = folderOverride != null ? folderOverride : draft.suggestedFolder();
+        String name = raw == null ? "" : truncate(raw.trim(), MAX_FOLDER_LENGTH);
+        return name.isEmpty() ? null : folderAssigner.findOrCreate(userId, name).orElse(null);
     }
 
     private static String truncate(String value, int max) {

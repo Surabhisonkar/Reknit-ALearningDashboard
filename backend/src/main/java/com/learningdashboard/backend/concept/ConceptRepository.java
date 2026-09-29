@@ -14,7 +14,7 @@ public interface ConceptRepository extends JpaRepository<Concept, UUID> {
 
     List<Concept> findByUserIdOrderByCreatedAtDesc(UUID userId);
 
-    List<Concept> findByUserIdAndFolderOrderByCreatedAtDesc(UUID userId, String folder);
+    List<Concept> findByUserIdAndFolderIdOrderByCreatedAtDesc(UUID userId, UUID folderId);
 
     void deleteByIdAndUserId(UUID id, UUID userId);
 
@@ -34,11 +34,11 @@ public interface ConceptRepository extends JpaRepository<Concept, UUID> {
      */
     List<Concept> findByUserIdAndVisualizationType(UUID userId, String visualizationType);
 
-    List<Concept> findByUserIdAndFolderAndVisualizationType(UUID userId, String folder, String visualizationType);
+    List<Concept> findByUserIdAndFolderIdAndVisualizationType(UUID userId, UUID folderId, String visualizationType);
 
-    /** Powers the "which library?" picker on Spark - every distinct non-empty folder name the user has used. */
-    @Query("select distinct c.folder from Concept c where c.userId = :userId and c.folder <> '' order by c.folder")
-    List<String> findDistinctNonEmptyFoldersByUserId(UUID userId);
+    /** Rows of [folderId (UUID), count (Long)] for the user's filed concepts - backs {@link ConceptFolderStats}. */
+    @Query("select c.folderId, count(c) from Concept c where c.userId = :userId and c.folderId is not null group by c.folderId")
+    List<Object[]> countByFolderIdForUser(@Param("userId") UUID userId);
 
     /** Confirm-save's duplicate check - runs before the new concept exists, so there's nothing to exclude. */
     Optional<Concept> findFirstByUserIdAndTitleIgnoreCase(UUID userId, String title);

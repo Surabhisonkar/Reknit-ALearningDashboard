@@ -17,6 +17,11 @@ export function deleteConcept(accessToken, id) {
   return apiRequest("DELETE", `/api/concepts/${id}`, { accessToken });
 }
 
+/** Moves a concept into a folder; folderId null makes it unfiled. Returns the updated concept. */
+export function moveConceptToFolder(accessToken, id, folderId) {
+  return apiRequest("PUT", `/api/concepts/${id}/folder`, { accessToken, body: { folderId: folderId ?? null } });
+}
+
 /**
  * Spark's feed - a random batch of the user's saved animations, optionally
  * scoped to one folder. {@code excludeIds} lets the caller page through the

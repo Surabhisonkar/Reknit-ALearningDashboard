@@ -7,6 +7,8 @@ export function mapConcept(json) {
     title: json.title,
     summary: json.summary,
     folder: json.folder ?? "",
+    folderId: json.folderId ?? null,
+    folderColor: json.folderColor ?? null,
     visualizationType: json.visualizationType,
     visualization: mapVisualizationPayload(json.visualization),
     currentVersion: json.currentVersion ?? 1,

@@ -15,17 +15,25 @@ First written 2026-09-25, updated 2026-09-27. Read it alongside `PROJECT_HANDOFF
 | S1 | Real Gemini key + DB password in `set-env.ps1` shipped in a zip | 🟡 File gitignored, `set-env.example.ps1` added, excluded from zips. **User must rotate the Gemini key.** |
 | C1 | Embedding-model default `text-embedding-004` (shut down) | ✅ Fixed in `application.yml` and `AiProperties.java` → `gemini-embedding-001` |
 | H1 | `VisualizePipeline` god-class (10 deps, persisted) | ✅ Phase A: persists nothing, 6 deps |
-| H2 | `generation` → `concept` repository coupling | ✅ Phase A: the concept module owns ports; adapters live elsewhere. (`rag.RetrievalService` → `ConceptRepository` remains, read-only.) |
+| H2 | `generation` → `concept` repository coupling | 🟡 `generation` fixed in Phase A (ports). **Corrected 2026-09-27:** `rag.ConceptIndexJobHandler` *and* `rag.RetrievalService` still inject `ConceptRepository`. See `TECH_DEBT_TASKS.md` T1 |
 | H3 | `switch` on `JobType` | ✅ `JobHandler` registry |
 | H4 | `switch` in `VisualPayloadValidator` | ❌ open |
 | H5 | `visualizationType` as a raw String; `"animation"` hard-coded | ❌ open |
 | H6 | Orchestration + rate limiting inline in controllers | ❌ open |
-| H7 | `ConceptController` also serves Spark/folders | ❌ open. Natural fix in Phase 7 (FolderController) |
+| H7 | `ConceptController` also serves Spark/folders | 🟡 Phase 7: folder routes moved to `FolderController` / `ConceptFolderController`; Spark's feed is still on `ConceptController` |
 | H8 | One `ResponseMapper` for everything | ❌ open (5 methods now) |
 | H9 | Frontend renderers fetch artifact URLs via auth+api | ❌ open. Needed before the audio layer (Phase 10) |
 | H10 | `accessToken` threaded through every API call | ❌ open |
-| H11 | `TYPE_LABELS` duplicated; inline styles | 🟡 `shared/constants/visualizationTypes.js` exists and Workspace/Capture use it; `LibraryPage` still has its own copy |
+| H11 | `TYPE_LABELS` duplicated; inline styles | ✅ Phase 7: `LibraryPage` uses the shared constant and has no inline styles |
 | T1 | Worker rollback-only trap in `JobProcessingService` | ❌ open, pre-existing. See handoff §4.1 |
+| L1 | **Artifact lifecycle not enforced** (parked behind Phase 7; migration now V4; see `docs/open-questions/artifact-lifecycle.md`) (no sweeper, no bucket rule, deleted concepts' and purged users' images leak; GDPR gap) | ❌ **Next up.** Designed: `design/artifact-lifecycle-cleanup.md` |
+| H12 | `web.ArtifactController` → `storage.ArtifactRepository` | ❌ `TECH_DEBT_TASKS.md` T2 |
+| H13 | `security.UserProvisioningService` → `user.UserRepository` | ❌ `TECH_DEBT_TASKS.md` T3 |
+| M1 | `ArtifactStorage.presignUploadUrl` has no caller | ❌ `TECH_DEBT_TASKS.md` T4 |
+| M2 | `backend/.github/modernize/` (Copilot leftovers, already git-ignored) | ❌ `TECH_DEBT_TASKS.md` T5 |
+| M3 | The V2 migration header comment is outdated (never edit applied migrations) | Accepted; documented |
+| M5 | Bad query/path parameters return 500, not 400, API-wide | ❌ `docs/open-questions/api-error-codes.md` |
+| M4 | CI workflows sit inside the subprojects, but the monorepo only runs root `.github/workflows` | ❌ Part of the L1 change |
 
 ## 5. Engineering standards (binding for all new work)
 
