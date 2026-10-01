@@ -6,9 +6,11 @@ import com.learningdashboard.backend.web.dto.FolderResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learningdashboard.backend.concept.Concept;
+import com.learningdashboard.backend.concept.ConceptNote;
 import com.learningdashboard.backend.concept.ConceptVersion;
 import com.learningdashboard.backend.rag.RelatedConcept;
 import com.learningdashboard.backend.generation.job.GenerationJob;
+import com.learningdashboard.backend.web.dto.ConceptNoteResponse;
 import com.learningdashboard.backend.web.dto.ConceptResponse;
 import com.learningdashboard.backend.web.dto.ConceptVersionResponse;
 import com.learningdashboard.backend.web.dto.ConceptVersionSummaryResponse;
@@ -71,6 +73,10 @@ public class ResponseMapper {
         var folder = summary.folder();
         return new FolderResponse(folder.getId(), folder.getName(), folder.getColor(), summary.conceptCount(),
                 folder.getCreatedAt());
+    }
+
+    public ConceptNoteResponse toConceptNoteResponse(ConceptNote note) {
+        return new ConceptNoteResponse(note.getId(), note.getContent(), note.getSource(), note.getCreatedAt());
     }
 
     public RelatedConceptResponse toRelatedConceptResponse(RelatedConcept related) {

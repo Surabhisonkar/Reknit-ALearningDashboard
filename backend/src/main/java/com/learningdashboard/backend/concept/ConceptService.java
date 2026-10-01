@@ -1,8 +1,6 @@
 package com.learningdashboard.backend.concept;
 
 import com.learningdashboard.backend.common.exception.NotFoundException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -13,17 +11,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ConceptService implements ConceptFolderContents {
 
-    private static final String ANIMATION_TYPE = "animation";
-
     private final ConceptRepository conceptRepository;
     private final ConceptVersionRepository conceptVersionRepository;
     private final FolderLookup folderLookup;
+    private final SparkFeedSampler sparkFeedSampler;
 
     public ConceptService(ConceptRepository conceptRepository, ConceptVersionRepository conceptVersionRepository,
-                          FolderLookup folderLookup) {
+                          FolderLookup folderLookup, SparkFeedSampler sparkFeedSampler) {
         this.conceptRepository = conceptRepository;
         this.conceptVersionRepository = conceptVersionRepository;
         this.folderLookup = folderLookup;
+        this.sparkFeedSampler = sparkFeedSampler;
     }
 
     @Transactional
@@ -111,31 +109,19 @@ public class ConceptService implements ConceptFolderContents {
     }
 
     /**
-     * Spark's feed: a random batch of the user's animation-type concepts,
-     * optionally scoped to one folder ("a particular library"), excluding
+     * Spark's feed: a batch of the user's concepts of every visual type, in
+     * the configured mix ({@link SparkFeedSampler}, Phase 8), optionally
+     * scoped to one folder ("a particular library"), excluding
      * whatever the client says it's already shown this session (so
      * "load more" doesn't repeat cards). Not persisted server-side as a
      * cursor - the client is the source of truth for what it's already
      * seen, which keeps this endpoint stateless like the rest of the API.
      */
     public List<Concept> randomSparkFeed(UUID userId, String folderName, Set<UUID> excludeIds, int limit) {
-        List<Concept> pool;
-        if (folderName == null || folderName.isBlank()) {
-            pool = conceptRepository.findByUserIdAndVisualizationType(userId, ANIMATION_TYPE);
-        } else {
-            pool = folderLookup.findIdByName(userId, folderName)
-                    .map(folderId -> conceptRepository.findByUserIdAndFolderIdAndVisualizationType(
-                            userId, folderId, ANIMATION_TYPE))
-                    .orElse(List.of());
-        }
-
-        List<Concept> shuffled = new ArrayList<>(pool);
-        Collections.shuffle(shuffled);
-
-        return shuffled.stream()
+        List<Concept> pool = listForUser(userId, folderName).stream()
                 .filter(concept -> !excludeIds.contains(concept.getId()))
-                .limit(limit)
                 .toList();
+        return sparkFeedSampler.sample(pool, limit);
     }
 
     /**

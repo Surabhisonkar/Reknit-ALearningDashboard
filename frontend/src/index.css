@@ -313,35 +313,133 @@ a { color: inherit; text-decoration: none; }
 
 /* ---- Modal ---- */
 .modal-overlay { align-items: center; background: rgba(43, 30, 26, .45); bottom: 0; display: flex; justify-content: center; left: 0; padding: 20px; position: fixed; right: 0; top: 0; z-index: 100; }
-.modal-dialog { background: var(--white); border-radius: 18px; box-shadow: var(--shadow); display: grid; gap: 16px; max-width: 440px; padding: 28px; width: 100%; }
+.modal-dialog { background: var(--white); border-radius: 18px; box-shadow: var(--shadow); color: var(--ink); display: grid; gap: 16px; max-width: 440px; padding: 28px; width: 100%; }
 .modal-title { font-size: 19px; }
 .modal-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; margin-top: 4px; }
 .modal-input { border: 1px solid var(--line); border-radius: 10px; font-size: 14px; padding: 10px 12px; width: 100%; }
 
-/* ---- Spark: reel feed ---- */
-.spark-page { display: flex; flex-direction: column; min-height: calc(100vh - 76px); padding-bottom: 0; padding-top: 28px; }
-.spark-topbar { align-items: flex-end; display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; padding-bottom: 18px; }
-.spark-subtitle { color: var(--muted); font-size: 12px; margin-top: 10px; max-width: 420px; }
-.spark-source-toggle { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; }
-.spark-source-toggle select { background: var(--white); border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 11px; padding: 9px 14px; }
-.spark-status { color: var(--muted); display: grid; gap: 14px; justify-items: center; padding: 80px 0; text-align: center; }
-.spark-status h1 { color: var(--ink); font-size: 26px; }
+/* ---- Spark (Phase 8): one card on stage, teaser then reveal ---------------- */
+.spark-page { background: var(--ink); color: var(--paper); display: flex; flex-direction: column; min-height: calc(100vh - 76px); padding: 18px 16px 24px; }
+.spark-state { color: rgba(255, 248, 246, .8); display: grid; flex: 1; font-size: 15px; place-items: center; padding: 48px 16px; text-align: center; }
 
-.spark-reel { flex: 1; margin: 0 auto; max-width: 480px; overflow-y: auto; scroll-snap-type: y mandatory; width: 100%; }
-.spark-slide { background: var(--white); border-top: 1px solid var(--line); box-shadow: var(--shadow); display: grid; gap: 16px; min-height: calc(100vh - 210px); padding: 26px 24px 30px; scroll-snap-align: start; }
-.spark-slide:first-child { border-top: none; border-radius: 20px 20px 0 0; }
-.spark-slide:last-child { border-radius: 0 0 20px 20px; }
-.spark-slide-header { align-items: center; display: flex; gap: 8px; }
-.spark-slide-body { align-items: center; display: flex; }
-.spark-slide-body > * { width: 100%; }
-.spark-slide-placeholder { background: var(--paper-deep); border-radius: 20px; height: 240px; width: 100%; }
-.spark-slide-footer { align-items: flex-end; display: flex; gap: 12px; justify-content: space-between; }
-.spark-slide-footer h2 { font-size: 18px; letter-spacing: -.02em; margin-bottom: 6px; }
-.spark-slide-footer p { color: var(--muted); font-size: 12px; line-height: 1.5; }
-.spark-slide-loading { align-items: center; color: var(--muted); display: flex; font-size: 12px; justify-content: center; min-height: 160px; }
+.spark-modebar { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 0 auto 16px; max-width: 760px; width: 100%; }
+.spark-modes { background: rgba(255, 255, 255, .08); border-radius: 999px; display: flex; gap: 4px; padding: 4px; }
+.spark-mode { align-items: center; background: transparent; border: 0; border-radius: 999px; color: rgba(255, 248, 246, .78); cursor: pointer; display: inline-flex; font: inherit; font-size: 13px; font-weight: 800; gap: 8px; min-height: 44px; padding: 0 16px; }
+.spark-mode:hover { color: var(--white); }
+.spark-mode.is-active { background: var(--white); color: var(--ink); }
+.spark-mode.is-soon { opacity: .6; }
+.spark-mode:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
+.spark-folder-picker select { background: var(--white); border: 0; border-radius: 999px; color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; min-height: 44px; padding: 0 16px; }
+.spark-notice { color: var(--yellow); flex-basis: 100%; font-size: 13px; font-weight: 700; min-height: 1.2em; text-align: center; }
+.spark-notice:empty { display: none; }
+
+/* Reels-style: every touch drag on the stage is a feed gesture, not a page scroll. */
+.spark-stage { align-items: center; display: flex; flex: 1; gap: 16px; justify-content: center; position: relative; touch-action: none; }
+.spark-frame { display: flex; flex-direction: column; gap: 10px; height: min(76vh, 740px); max-width: 480px; width: 100%; }
+.spark-enter-up { animation: spark-in-up 260ms ease-out; }
+.spark-enter-down { animation: spark-in-down 260ms ease-out; }
+.spark-enter-left { animation: spark-in-left 260ms ease-out; }
+.spark-enter-right { animation: spark-in-right 260ms ease-out; }
+@keyframes spark-in-up { from { opacity: 0; transform: translateY(48px); } to { opacity: 1; transform: none; } }
+@keyframes spark-in-down { from { opacity: 0; transform: translateY(-48px); } to { opacity: 1; transform: none; } }
+@keyframes spark-in-left { from { opacity: 0; transform: translateX(56px); } to { opacity: 1; transform: none; } }
+@keyframes spark-in-right { from { opacity: 0; transform: translateX(-56px); } to { opacity: 1; transform: none; } }
+
+.spark-nav { display: flex; flex-direction: column; gap: 12px; }
+.spark-nav .spark-icon-button { background: rgba(255, 255, 255, .12); color: var(--white); }
+.spark-nav .spark-icon-button:hover:not(:disabled) { background: rgba(255, 255, 255, .22); }
+
+.spark-card { background: var(--white); border-radius: 28px; box-shadow: 0 24px 60px rgba(0, 0, 0, .28); color: var(--ink); display: grid; flex: 1; grid-template-rows: auto 1fr auto; min-height: 0; overflow: hidden; position: relative; }
+.spark-card-band { background: var(--fc); height: 10px; left: 0; position: absolute; right: 0; top: 0; }
+.folder-color-none .spark-card-band, .spark-card:not([class*="folder-color-"]) .spark-card-band { background: repeating-linear-gradient(90deg, var(--line) 0 12px, transparent 12px 20px); }
+.spark-card-meta { align-items: center; display: flex; gap: 10px; padding: 26px 22px 0; }
+.spark-card-type { background: var(--paper-deep); border-radius: 999px; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .06em; padding: 5px 10px; text-transform: uppercase; }
+.spark-card-folder { color: var(--fc-ink, var(--muted)); font-size: 13px; font-weight: 800; }
+.spark-teaser { align-content: center; background: transparent; border: 0; color: var(--ink); cursor: pointer; display: grid; font: inherit; gap: 26px; justify-items: center; padding: 24px 30px 40px; text-align: center; }
+.spark-teaser h2 { font-size: clamp(30px, 6vw, 42px); letter-spacing: -.045em; line-height: 1.1; }
+.spark-teaser-hint { align-items: center; background: var(--paper-deep); border-radius: 999px; color: var(--coral-dark); display: inline-flex; font-size: 14px; font-weight: 800; gap: 8px; padding: 10px 18px; }
+.spark-teaser:hover .spark-teaser-hint { background: #ffe0d7; }
+.spark-teaser:focus-visible { outline: 3px solid var(--coral); outline-offset: -8px; }
+/* The visual keeps finger scrolling (user decision); feed swipes happen on the card's header and footer. */
+.spark-card-visual { align-content: start; display: grid; min-height: 0; overflow: auto; padding: 14px 18px 0; touch-action: pan-x pan-y; }
+.spark-card-loading { color: var(--muted); display: grid; font-size: 14px; place-items: center; }
+.spark-card-footer { align-items: center; display: flex; gap: 12px; justify-content: space-between; padding: 14px 18px 18px; }
+.spark-card-footer h2 { font-size: 18px; letter-spacing: -.02em; line-height: 1.25; min-width: 0; }
+.spark-card-actions { display: flex; flex: 0 0 auto; gap: 8px; position: relative; }
+
+.spark-icon-button { align-items: center; background: var(--paper-deep); border: 0; border-radius: 50%; color: var(--ink); cursor: pointer; display: inline-flex; flex: 0 0 auto; height: 44px; justify-content: center; width: 44px; }
+.spark-icon-button:hover:not(:disabled) { background: #ffe0d7; }
+.spark-icon-button:disabled { cursor: default; opacity: .4; }
+.spark-icon-button[aria-pressed="false"] { color: var(--muted); }
+.spark-icon-button-accent { background: var(--coral); color: var(--white); }
+.spark-icon-button-accent:hover:not(:disabled) { background: var(--coral-dark); }
+.spark-icon-button:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
+
+.deep-dive { position: relative; }
+.deep-dive-choices { background: var(--white); border-radius: 999px; bottom: calc(100% + 10px); box-shadow: 0 12px 30px rgba(0, 0, 0, .18); display: flex; gap: 8px; padding: 6px; position: absolute; right: -6px; }
+
+/* align-content: start keeps the renderer's own rows (e.g. the animation's controls) at their natural height. */
+.reveal-stage { align-content: start; display: grid; min-height: 0; }
+.reveal-fade { animation: reveal-fade 420ms ease-out; }
+.reveal-play { animation: reveal-play 420ms ease-out; }
+.reveal-grow { animation: reveal-grow 620ms cubic-bezier(.2, .8, .2, 1); }
+.reveal-draw { animation: reveal-draw 700ms ease-in-out; }
+@keyframes reveal-fade { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes reveal-play { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@keyframes reveal-grow { from { clip-path: circle(0% at 50% 45%); opacity: .4; } to { clip-path: circle(120% at 50% 45%); opacity: 1; } }
+@keyframes reveal-draw { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+
+.spark-related { display: flex; flex: 1; flex-direction: column; gap: 10px; min-height: 0; }
+.spark-related-bar { align-items: center; color: var(--paper); display: flex; gap: 10px; }
+.spark-related-bar .spark-icon-button { background: rgba(255, 255, 255, .12); color: var(--white); }
+.spark-related-title { flex: 1; font-size: 14px; font-weight: 800; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.spark-card-game { grid-template-rows: auto 1fr auto; }
+/* A scroll container would claim vertical finger drags; games pass swipes to the feed unless they own gestures. */
+.spark-game-body { align-items: center; display: flex; justify-content: center; min-height: 0; overflow: auto; padding: 12px 18px; touch-action: none; }
+.spark-game-body[data-gesture-ignore] { touch-action: auto; }
+
+/* Ask the AI: a bottom sheet over the card */
+.modal-overlay-sheet { align-items: flex-end; padding: 0; }
+.modal-dialog-sheet { border-radius: 24px 24px 0 0; display: flex; flex-direction: column; gap: 12px; max-height: 82vh; max-width: 640px; padding: 22px 22px 18px; }
+.chat-log { display: flex; flex: 1; flex-direction: column; gap: 10px; min-height: 120px; overflow-y: auto; padding: 2px; }
+.chat-empty { color: var(--muted); font-size: 14px; margin: auto; }
+.chat-bubble { border-radius: 18px; font-size: 14px; line-height: 1.5; max-width: 85%; padding: 10px 14px; position: relative; }
+.chat-bubble p { white-space: pre-wrap; }
+.chat-bubble-user { align-self: flex-end; background: var(--ink); border-bottom-right-radius: 6px; color: var(--white); }
+.chat-bubble-ai { align-self: flex-start; background: var(--paper-deep); border-bottom-left-radius: 6px; color: var(--ink); padding-right: 40px; }
+.chat-read-aloud { background: transparent; border: 0; border-radius: 50%; color: var(--muted); cursor: pointer; height: 32px; position: absolute; right: 4px; top: 4px; width: 32px; }
+.chat-read-aloud:hover { color: var(--ink); }
+.chat-thinking { display: inline-flex; gap: 5px; padding: 14px 16px; }
+.chat-thinking span { animation: chat-dot 1s infinite ease-in-out; background: var(--muted); border-radius: 50%; height: 7px; width: 7px; }
+.chat-thinking span:nth-child(2) { animation-delay: .15s; }
+.chat-thinking span:nth-child(3) { animation-delay: .3s; }
+@keyframes chat-dot { 0%, 80%, 100% { opacity: .3; transform: none; } 40% { opacity: 1; transform: translateY(-3px); } }
+.chat-input { align-items: center; display: flex; gap: 10px; }
+.chat-input .modal-input { border-radius: 999px; min-height: 46px; padding: 0 18px; }
+.chat-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.chat-actions .button { align-items: center; display: inline-flex; gap: 6px; }
+.chat-saved { color: #006b5d; font-size: 13px; font-weight: 800; }
+.chat-confirm { background: var(--paper-deep); border-radius: 14px; display: grid; gap: 8px; padding: 14px; }
+.chat-confirm p { font-size: 14px; font-weight: 700; }
+
+/* Concept Detail: saved notes */
+.notes-panel { margin-top: 18px; }
+.notes-panel summary { align-items: center; color: var(--ink); cursor: pointer; display: inline-flex; font-size: 15px; font-weight: 800; gap: 8px; min-height: 44px; }
+.notes-count { background: var(--paper-deep); border-radius: 999px; color: var(--muted); font-family: 'Space Mono', monospace; font-size: 12px; padding: 2px 8px; }
+.notes-list { display: grid; gap: 10px; list-style: none; margin: 8px 0 0; padding: 0; }
+.note { background: var(--white); border: 1px solid var(--line); border-radius: 14px; display: grid; gap: 8px; padding: 14px 16px; }
+.note p { font-size: 14px; line-height: 1.55; white-space: pre-wrap; }
+.note-meta { align-items: center; color: var(--muted); display: flex; font-size: 12px; justify-content: space-between; }
+.note-delete { background: transparent; border: 0; border-radius: 50%; color: var(--muted); cursor: pointer; height: 36px; width: 36px; }
+.note-delete:hover { color: var(--coral-dark); }
+
+@media (prefers-reduced-motion: reduce) {
+  .spark-enter-up, .spark-enter-down, .spark-enter-left, .spark-enter-right,
+  .reveal-fade, .reveal-play, .reveal-grow, .reveal-draw, .chat-thinking span { animation: none; }
+}
 
 /* ---- Spark: mini games ---- */
-.spark-slide-body-game { justify-content: center; }
 .spark-game { display: grid; gap: 18px; justify-items: center; width: 100%; }
 .spark-game-instructions { color: var(--muted); font-size: 12px; text-align: center; }
 .spark-game-footer { align-items: center; display: flex; font-family: 'Space Mono', monospace; font-size: 12px; gap: 14px; justify-content: center; }
@@ -357,8 +455,11 @@ a { color: inherit; text-decoration: none; }
 .spark-dash-overlay strong { font-size: 18px; }
 
 @media (max-width: 760px) {
-  .spark-reel { max-width: none; }
-  .spark-slide { border-radius: 0 !important; min-height: calc(100vh - 190px); }
+  .spark-page { padding: 12px 10px 14px; }
+  .spark-nav { display: none; }
+  .spark-frame { height: calc(100vh - 196px); max-width: none; }
+  .spark-mode { padding: 0 12px; }
+  .spark-mode span { font-size: 12px; }
   .spark-game-grid { grid-template-columns: repeat(4, 1fr); }
   .spark-match-card { height: 54px; width: 54px; }
 }

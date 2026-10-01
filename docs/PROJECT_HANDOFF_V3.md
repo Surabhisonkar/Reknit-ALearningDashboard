@@ -25,7 +25,7 @@ Companion documents (all in the Claude Project, and also in the zip's `docs/` fo
 5. **Verification honesty:**
    - **Frontend:** run `npm run lint` and `npm run build` before delivering. Headless-browser tests with Playwright against a mocked API are possible and have been used.
    - **Backend:** cannot be compiled in the assistant's sandbox (Maven Central → 403 by policy). Every time, state that the user's `mvn test` output is the real check.
-   - **Partial checks that do work:** a `javac` parse, and `javac` analysis with library-missing errors filtered out, which catches errors in calls between the project's own classes.
+   - **Partial checks that do work:** a `javac` parse, and `javac` analysis with library-missing errors filtered out, which catches errors in calls between the project's own classes. **Also flag any unresolved JDK class** (e.g. `UUID`): the JDK is present, so those are real errors - a missing `import java.util.UUID` slipped through Phase 7 because this wasn't checked.
    - Gemini and Hugging Face are also blocked from the sandbox, so no real embeddings or LLM calls are possible there.
 6. **Real logs beat code review.** When the user pastes a real error or log, treat it as ground truth.
 7. **Deliverables:** a full zip for multi-file changes; just the changed file for a tiny fix. Never ship `node_modules`, `target`, `dist`, or `set-env.ps1`.
@@ -49,7 +49,7 @@ The product is domain-agnostic (anything the user wants to retain).
 **Emotional core:** revisiting should feel like scrolling short-form video, not opening a textbook.
 
 **ADHD UX principles:**
-- Short sessions with a clear end ("you've reviewed 5 today").
+- Short sessions with a clear end ("you've reviewed 5 today"). *Spark itself is endless by the user's Phase 8 decision; the "reviewed today" progress idea stays for Phase 13.*
 - Big touch targets.
 - Motion only as reward or feedback, never decoration.
 - Colour *categorises* (each folder or topic gets a consistent colour).
@@ -82,7 +82,7 @@ The product is domain-agnostic (anything the user wants to retain).
 - **Audio narration** must be **one reusable layer** used by Concept Detail and Spark, never duplicated per screen.
 - **Progress** is a light touch ("reviewed 5 today").
 
-New detail (roadmap Phase 8): Spark cards combine **animation + AI audio** on reveal. One question is still open, to resolve before Phase 8: (a) the reveal is always animated, whatever the visual type, or (b) Spark favours the `animation` visual type.
+Resolved in Phase 8: every visual type appears in Spark and the reveal is always animated per type (animations shown most: games 20 / animation 60 / mind map 15 / image + diagram 5). Narration uses a swappable `Narrator` (browser voice today); the AI voice is the last phase.
 
 **Screens:** Landing, About, Library (folders + search), Capture, Concept Detail (`/workspace`), Spark. Build Spark last among them.
 
@@ -92,7 +92,7 @@ New detail (roadmap Phase 8): Spark cards combine **animation + AI audio** on re
 
 **Backend:** Spring Boot 3.5.9, Java 21, Maven.
 
-- **Database:** MySQL 8, with Flyway migrations `V1__init_schema.sql`, `V2__concept_versioning.sql` and `V3__folders.sql` (Phase 7). Hibernate `ddl-auto: validate`.
+- **Database:** MySQL 8, with Flyway migrations `V1__init_schema.sql`, `V2__concept_versioning.sql`, `V3__folders.sql` (Phase 7) and `V4__concept_notes.sql` (Phase 8). The parked artifact-lifecycle migration will be V5. Hibernate `ddl-auto: validate`.
 - **Auth:** Cognito (Hosted UI + PKCE). JWT resource server. Users are provisioned just in time by `CognitoUserProvisioningFilter`, which delegates to `UserProvisioningService`.
 - **Async:** AWS SQS. One jar, two profiles:
   - `api`: controllers only, **never calls an AI provider**.
@@ -125,8 +125,8 @@ New detail (roadmap Phase 8): Spark cards combine **animation + AI audio** on re
 | 4 Scaling infra | 🟡 paused | Deliberately |
 | 5 Draft → confirm-save + versioning (A+B) | ✅ in code; browser-tested against a mocked API | Awaiting the user's `mvn test` and a real run |
 | 6 Related concepts (RAG surfaced) | 🟡 steps 1–4 built | **Step 5, the real-data product check, is the user's next action** (§6) |
-| 7 Folders + Library redesign | 🟡 built on `feature/phase-7-folders` | Awaiting the user's `mvn test`, V3 dry run and test-account check (`backend/docs/VERIFY_PHASE_7.md`) |
-| 8 Spark UI | 🟡 more exists than planned | A real feed of saved *animation* concepts + 2 mini-games; none of the Spark design itself |
+| 7 Folders + Library redesign | ✅ merged 2026-09-29 | Awaiting the user's `mvn test`, V3 dry run and test-account check (`backend/docs/VERIFY_PHASE_7.md`) |
+| 8 Spark + Ask the AI + Notes | 🟡 built on `feature/phase-8-spark` | Awaiting the user's `mvn test` and test-account check (`backend/docs/VERIFY_PHASE_8.md`) |
 | 9–16 | ❌ | See the roadmap |
 
 ### API (complete list, from the code)
@@ -148,7 +148,10 @@ GET    /api/concepts/folders             -> names of folders holding >= 1 concep
 PUT    /api/concepts/{id}/folder         -> move {folderId | null}; 404 if the concept or folder isn't yours
 GET    /api/folders                      POST /api/folders {name, color?}   PATCH /api/folders/{id} {name?, color?}
 DELETE /api/folders/{id}?concepts=unfile|delete   (parameter required; 400 otherwise)
-GET    /api/concepts/spark-feed?folder=&excludeIds=&limit=   -> random animation concepts
+GET    /api/concepts/spark-feed?folder=&excludeIds=&limit=   -> every visual type, in the app.spark.mix shares (Phase 8)
+POST   /api/concepts/{id}/ask {history, question}   -> 202 job; resultPayload {kind:"ANSWER", answer}
+POST   /api/concepts/{id}/notes/from-chat {history}  -> 202 job; resultPayload {kind:"NOTE", noteId, content}
+GET    /api/concepts/{id}/notes                      DELETE /api/concepts/{id}/notes/{noteId}
 ```
 
 ### Key backend design (details in `ARCHITECTURE_DIAGRAMS.md`)
@@ -162,7 +165,7 @@ GET    /api/concepts/spark-feed?folder=&excludeIds=&limit=   -> random animation
 
 ### Tests
 
-20 backend unit-test classes (8 original + 5 for Phase A+B + 1 for Phase 6 + 6 for Phase 7). For the frontend there are no unit tests; checking is lint + build + Playwright scripts.
+26 backend unit-test classes (8 original + 5 for Phase A+B + 1 for Phase 6 + 6 for Phase 7 + 6 for Phase 8). For the frontend there are no unit tests; checking is lint + build + Playwright scripts.
 
 ---
 
@@ -206,12 +209,11 @@ GET    /api/concepts/spark-feed?folder=&excludeIds=&limit=   -> random animation
 
    Then walk through `learning-dashboard-backend/docs/VERIFY_PHASE_A_B.md` and `VERIFY_PHASE_F.md`. If anything fails, paste the real error; fix from that.
 2. **User: Phase 6 step 5.** Save the five concepts in `learning-dashboard-frontend/scripts/related-concepts-fixtures.md`, then run `node scripts/verify-related-concepts.mjs --token <token>`. Set the suggested `RELATED_MAX_DISTANCE`.
-3. **User: Phase 7.** Follow `backend/docs/VERIFY_PHASE_7.md`: dry-run `V3__folders.sql` on a copy of the database, `mvn test`, then `frontend/scripts/verify-phase7-folders.mjs` on a separate test account. Merge `feature/phase-7-folders` when it passes.
-4. **Then the artifact-lifecycle fix** (§4 item 0), resumed from `docs/open-questions/artifact-lifecycle.md`. Its migration is now V4.
+3. **User: Phase 8.** Follow `backend/docs/VERIFY_PHASE_8.md`: `mvn test`, then `frontend/scripts/verify-phase8-spark.mjs` on a separate test account. Merge `feature/phase-8-spark` when it passes.
+4. **Pending:** the artifact-lifecycle fix (§4 item 0), resumed from the user's local `docs/open-questions/artifact-lifecycle.md` (git-ignored). Its migration is now V5.
 
 **Open product decisions (ask; never assume):**
-- Are `QuickMatchGame` and `TapDashGame` keepers or placeholders?
-- Spark reveal: option (a) or (b) above?
+- Which real mini-games replace the two placeholders (Phase 13)? A new game is one component + one line in `features/spark/games/catalog.js`.
 - The due-for-review algorithm.
 - The streak mechanic.
 - Should Folder colours be user-picked or auto-assigned from a palette?

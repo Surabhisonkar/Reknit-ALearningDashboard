@@ -80,6 +80,23 @@ app:
     visualize:
       window-seconds: ${VISUALIZE_RATE_WINDOW_SECONDS:60}
       max-requests: ${VISUALIZE_RATE_MAX:10}
+    ask:
+      window-seconds: ${ASK_RATE_WINDOW_SECONDS:60}
+      max-requests: ${ASK_RATE_MAX:20}
+
+  # Spark feed mix (Phase 8): concept shares by type bucket. Games, the other
+  # 20% of cards, are added by the frontend (frontend/src/features/spark/config/feedMix.js).
+  spark:
+    mix:
+      # Keys in [brackets]: Spring Boot strips "_" from unbracketed map keys, so "mind_map" would bind as "mindmap".
+      weights:
+        "[animation]": 60
+        "[mind_map]": 15
+        "[still]": 5
+      bucket-of:
+        "[image]": still
+        "[diagram]": still
+      default-weight: 5
 
   aws:
     region: ${AWS_REGION:us-east-1}

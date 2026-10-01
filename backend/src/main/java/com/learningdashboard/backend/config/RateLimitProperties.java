@@ -7,11 +7,15 @@ public class RateLimitProperties {
 
     private Endpoint explain = new Endpoint(60, 10);
     private Endpoint visualize = new Endpoint(60, 10);
+    /** Spark "Ask the AI": questions and saving a chat as a note share this limit (Phase 8). */
+    private Endpoint ask = new Endpoint(60, 20);
 
     public Endpoint getExplain() { return explain; }
     public void setExplain(Endpoint explain) { this.explain = explain; }
     public Endpoint getVisualize() { return visualize; }
     public void setVisualize(Endpoint visualize) { this.visualize = visualize; }
+    public Endpoint getAsk() { return ask; }
+    public void setAsk(Endpoint ask) { this.ask = ask; }
 
     public static class Endpoint {
         private long windowSeconds;

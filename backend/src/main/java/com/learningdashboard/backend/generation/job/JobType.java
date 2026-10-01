@@ -16,5 +16,9 @@ public enum JobType {
      * saved or regenerated, so the embedding-provider call happens in the
      * worker - the api service never calls an AI provider itself.
      */
-    INDEX_CONCEPT
+    INDEX_CONCEPT,
+    /** One question in a Spark "Ask the AI" chat about a saved concept (Phase 8). Nothing is saved on the concept. */
+    ASK_CONCEPT,
+    /** Condenses a Spark chat into a short note and saves it on the concept (Phase 8). */
+    CHAT_TO_NOTE
 }

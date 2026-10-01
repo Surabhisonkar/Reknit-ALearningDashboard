@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.learningdashboard.backend.common.exception.NotFoundException;
+import com.learningdashboard.backend.generation.model.ChatMessage;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -21,11 +23,13 @@ public class GenerationJobService {
     private final GenerationJobRepository jobRepository;
     private final JobQueue jobQueue;
     private final ObjectMapper objectMapper;
+    private final ChatJobCodec chatJobCodec;
 
-    public GenerationJobService(GenerationJobRepository jobRepository, JobQueue jobQueue, ObjectMapper objectMapper) {
+    public GenerationJobService(GenerationJobRepository jobRepository, JobQueue jobQueue, ObjectMapper objectMapper, ChatJobCodec chatJobCodec) {
         this.jobRepository = jobRepository;
         this.jobQueue = jobQueue;
         this.objectMapper = objectMapper;
+        this.chatJobCodec = chatJobCodec;
     }
 
     @Transactional
@@ -110,8 +114,22 @@ public class GenerationJobService {
         return null;
     }
 
+    /** One "Ask the AI" question about a concept (Phase 8). The caller has already checked ownership. */
+    public GenerationJob submitAskJob(UUID userId, UUID conceptId, List<ChatMessage> history, String question) {
+        return submitJson(userId, JobType.ASK_CONCEPT, chatJobCodec.toInputJson(conceptId, history, question));
+    }
+
+    /** Condense a chat into a note on the concept (Phase 8). The caller has already checked ownership. */
+    public GenerationJob submitChatToNoteJob(UUID userId, UUID conceptId, List<ChatMessage> history) {
+        return submitJson(userId, JobType.CHAT_TO_NOTE, chatJobCodec.toInputJson(conceptId, history, null));
+    }
+
     private GenerationJob submit(UUID userId, JobType type, ObjectNode input) {
-        GenerationJob job = new GenerationJob(userId, type, input.toString());
+        return submitJson(userId, type, input.toString());
+    }
+
+    private GenerationJob submitJson(UUID userId, JobType type, String inputJson) {
+        GenerationJob job = new GenerationJob(userId, type, inputJson);
         job = jobRepository.save(job);
         jobQueue.enqueue(job.getId());
         return job;

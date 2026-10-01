@@ -98,7 +98,7 @@ assistant's sandbox, where Gemini is blocked). Save the five concepts in
 muscles ↔ posture both ways and keeps the controls out, and it prints a
 measured `RELATED_MAX_DISTANCE` to replace the 0.35 guess.
 
-## Phase 7 — Folders as Real Entities + Library Redesign 🟡 BUILT, WAITING ON THE USER'S RUN
+## Phase 7 — Folders as Real Entities + Library Redesign ✅ DONE (verified and merged by the user, 2026-09-29)
 Built 2026-09-28 on `feature/phase-7-folders`; design and decisions in
 `backend/docs/design/phase-7-folders.md`. A new `folder` module (entity,
 palette colour, case-insensitive/accent-sensitive unique names) behind ports
@@ -114,54 +114,40 @@ create / delete dialogs; shared `Modal`/`OverflowMenu` now manage keyboard focus
 of the database, and `frontend/scripts/verify-phase7-folders.mjs` passes on a
 test account (`backend/docs/VERIFY_PHASE_7.md`).
 
-## Phase 8 — Spark Feed: UI/Design Only 🟡 MORE BUILT THAN TRACKED (backend AND frontend)
-**Correction 2026-09-27**: the frontend isn't a mockup either. `SparkPage`
-plus `useSparkFeed` play the user's real saved *animation* concepts with
-infinite scroll and interleave two working mini-games (`QuickMatchGame`,
-`TapDashGame`) after every 3 cards. **Open question for the user:** are those
-two games keepers or placeholders (see Phase 13)?
+## Phase 8 — Spark Feed + Ask the AI + Notes 🟡 BUILT, WAITING ON THE USER'S RUN
+Built 2026-09-29 on `feature/phase-8-spark` in three steps (UI locked on a
+mock, backend, wiring). Design and every decision: `backend/docs/design/phase-8-spark.md`.
+- **Spark**: one card on stage, teaser then tap to reveal (a per-type entrance),
+  endless feed (user decision, replacing "short sessions") in the mix games 20 /
+  animation 60 / mind map 15 / image + diagram 5, swipes / wheel / keys, related
+  sub-stack, icon-only deep dive, Due for review says "coming soon".
+- **Ask the AI**: a chat in a bottom sheet (worker jobs `ASK_CONCEPT`,
+  `CHAT_TO_NOTE`); save as an AI-condensed note (new `concept_notes`, V4, shown
+  on Concept Detail) or make a visual via Capture.
+- **Foundations**: a swappable `Narrator` (browser voice today), a `GameRegistry`
+  + `GamePicker` strategy, a `SparkFeedSampler` with weights in `app.spark.mix`.
 
-**Correction**: `GET /api/concepts/spark-feed?folder=&excludeIds=&limit=`
-already exists (`ConceptService.randomSparkFeed`, capped at 25 per
-request). This is only the "give me some concepts" data source for
-Shuffle mode — nothing about teaser/reveal, gestures, mini-games, or the
-other two modes is built, and the explicit working agreement (UI locked
-before backend wiring) still applies to everything else in this phase.
+**Done means:** the user's `mvn test` passes and
+`frontend/scripts/verify-phase8-spark.mjs` passes on a test account
+(`backend/docs/VERIFY_PHASE_8.md`).
 
-**New product detail, captured 2026 — needs one design decision before
-Phase 8 starts**: Spark feed cards should combine **animation + AI audio**
-on reveal, not just a static visualization with audio playing separately.
-Open question to resolve when this phase actually starts: does this mean
-(a) the reveal *transition* itself should always be animated/motion-based
-regardless of the underlying visualization type (an image gets a reveal
-animation, a mind map's nodes animate into place, etc.), synchronized
-with audio, or (b) Spark specifically favors/requires the `animation`
-visualization type for cards, with audio narrating over it? These are
-different UI/audio-sync designs — (a) is a Spark-feed presentation layer
-concern; (b) would affect what `VisualizePromptBuilder` is asked to
-generate. Not blocking now (Phase 8 hasn't started), but resolve before
-locking the card UI, not during.
-
-## Phase 9 — Spark Feed: Real Data ❌ NOT STARTED
+## Phase 9 — Spark Feed: Review Tracking ❌ NOT STARTED
+*Renamed 2026-09-29: Phase 8 already runs Shuffle and Folder mode on real data. What's left is "Due for review".*
 Wire Phase 8's confirmed UI to real concepts. Requires new data: track
 `last_reviewed_at` per concept (and ideally a lightweight review-history
 table) to actually drive "due for review." Folder-deep-dive mode depends
 on Phase 7's real folder entities existing.
 
-## Phase 10 — Audio Narration Layer ❌ NOT STARTED
-New provider interface mirroring the existing
-`TextGenerationProvider`/`VisualGenerationProvider` shape. Must be
-architected as one reusable service from day one — plugs into both
-Concept Detail and Spark feed via the same implementation, never
-duplicated per screen (explicit product requirement, not a suggestion).
-No new storage entity needed — the existing `Artifact` table already
-generalizes to any S3-backed file, an audio narration is just another
-row with `content_type = audio/mpeg`. **See Phase 8's open question**:
-whether Spark's "animation + AI audio" means a synchronized reveal
-transition (an audio/animation-timing design concern for this phase) or
-a bias toward the `animation` visualization type specifically — resolve
-before this phase locks its interface shape, since the answer affects
-whether `NarrationProvider` needs any timing/sync metadata at all.
+## Phase 10 — (moved) AI voice-over is now the LAST phase, after Phase 16
+User decision 2026-09-29. The foundation is already built in Phase 8: the
+card's narration controls and a swappable `Narrator` interface
+(`frontend/src/shared/narration/`), used today by a browser-voice
+implementation. The AI voice becomes one more `Narrator` implementation (it
+plays a narration artifact from the backend) plus a backend
+`NarrationProvider` behind the usual provider interface, with the audio stored
+as an ordinary `Artifact` row (`content_type = audio/mpeg`) - no new table.
+The Phase 8 open question is resolved: every visual type appears in Spark and
+the reveal itself is always animated, so narration needs no per-type timing.
 
 ## Phase 11 — (empty) RAG Surfaced moved to Phase 6. A stale duplicate "Phase 10 — RAG Surfaced" entry was removed 2026-09-27
 
@@ -172,10 +158,11 @@ multiple distinct ideas and split it into linked cards instead of
 forcing one. Meaningful prompt + pipeline redesign, not a small tweak.
 
 ## Phase 13 — Mini-Games, Streaks, Progress ❌ NOT STARTED, PARTLY UNDEFINED
-- Mini-games: confirmed core to the product. Two games already exist in code
-  (`QuickMatchGame`, `TapDashGame`, in `features/spark/games`, wired into the
-  Spark feed), but they were never formally chosen. **Decide keep / replace
-  before this phase starts**, not during it.
+- Mini-games: confirmed core to the product. Phase 8 kept `QuickMatchGame` and
+  `TapDashGame` as **placeholders** (user decision) behind a `GameRegistry` +
+  `GamePicker` strategy: a new game is one component plus one `register(...)`
+  line in `features/spark/games/catalog.js`. **Choose the real games before this
+  phase starts.**
 - Streaks/progress: confirmed to be "lightweight," no concrete mechanic
   chosen yet either.
 - Due-for-review decay algorithm: confirmed automatic/time-based, exact
@@ -206,13 +193,11 @@ the free tier, monitoring/alerting actually wired to something you'll see
 
 ---
 
-## Where things stand (2026-09-27)
+## Where things stand (2026-09-29)
 
-- **Phase 5 (A+B)**: delivered and verified in a browser against a mocked API. The backend compile and `mvn test` still need to be run on the user's machine.
-- **Phase 6**: steps 1–4 delivered. **Step 5 (the real-data product check) is the next action, and it's the user's to run** (see Phase 6 above).
-- **Cleanup release 2026-09-27**: 14 unused frontend files removed. The `AiProperties` embedding default was fixed to `gemini-embedding-001`, and `ARCHITECTURE_DIAGRAMS.md` was re-verified against the code. Current code: `learning-dashboard-release-2026-09-27.zip`.
-- **Phase 7 (Folders + Library)**: built on `feature/phase-7-folders` (2026-09-28). Next action is the user's: `backend/docs/VERIFY_PHASE_7.md`.
-- **Then the artifact-lifecycle fix**, resumed from `docs/open-questions/artifact-lifecycle.md` (its migration is now V4).
+- **Phases 5, 6 (steps 1–4) and 7** are merged. Phase 6 step 5 (the real-data product check) is still the user's to run.
+- **Phase 8 (Spark + Ask the AI + Notes)**: built on `feature/phase-8-spark`. Next action is the user's: `backend/docs/VERIFY_PHASE_8.md`.
+- **Pending**: the artifact-lifecycle fix (its open questions are in the user's local `docs/open-questions/`; its migration is now V5).
 
 ## Decisions log
 | Date | Decision |
@@ -222,6 +207,8 @@ the free tier, monitoring/alerting actually wired to something you'll see
 | 2026-09-27 | `VisualizePipeline` (not `VisualizeJobHandler`) calls `VisualAssetGenerator`. The diagrams now match the code. |
 | 2026-09-28 | Phase 7 goes before the artifact-lifecycle fix; the lifecycle's open questions are parked in `docs/open-questions/`. |
 | 2026-09-28 | Phase 7 decisions (module, auto-filing, colours, name collation, API compatibility, delete modes, UI): see `backend/docs/design/phase-7-folders.md`. |
+| 2026-09-29 | Phase 8 decisions (reveal, mix 20/60/15/5, endless feed, narrator foundation with the AI voice moved last, game registry, Ask the AI with notes/visual, coming-soon Due, teaser on return, finger-scroll visuals, sampler, ask rate limit 20/min, prompt tag neutralizing): `backend/docs/design/phase-8-spark.md`. |
+| 2026-09-29 | `docs/open-questions/` stays local (git-ignored by the user); patches no longer include it. |
 | 2026-09-28 | Deliveries are a single git patch against `main` plus a list of changed files, not a full zip. Each phase is its own branch, tested by the user, then merged. Questions come as multiple choice mid-work, then work resumes. |
 | 2026-09-27 | Artifact lifecycle: an app sweeper plus an S3 tag/bucket-rule backstop (7 days), GDPR erasure in the same change, a dry-run reconcile, and `AccountPurgeJob` worker-only. Monorepo `backend/` + `frontend/`, CI moves to the root `.github/`. Extras deferred to `TECH_DEBT_TASKS.md` (T1–T5). |
 

@@ -24,18 +24,6 @@ public interface ConceptRepository extends JpaRepository<Concept, UUID> {
     /** Feeds the duplicate-name check after a new concept is saved - excludes itself, case-insensitive. */
     Optional<Concept> findFirstByUserIdAndTitleIgnoreCaseAndIdNot(UUID userId, String title, UUID excludeId);
 
-    /**
-     * Spark's candidate pool: every one of the user's concepts of a given
-     * visualization type (Spark only ever plays "animation" concepts).
-     * Fetched whole and shuffled in-app rather than via {@code ORDER BY
-     * RAND()} - same documented "fine at personal-library scale" trade-off
-     * as {@code RetrievalService}, and it sidesteps DB-specific random-
-     * function differences and empty-IN-list edge cases entirely.
-     */
-    List<Concept> findByUserIdAndVisualizationType(UUID userId, String visualizationType);
-
-    List<Concept> findByUserIdAndFolderIdAndVisualizationType(UUID userId, UUID folderId, String visualizationType);
-
     /** Rows of [folderId (UUID), count (Long)] for the user's filed concepts - backs {@link ConceptFolderStats}. */
     @Query("select c.folderId, count(c) from Concept c where c.userId = :userId and c.folderId is not null group by c.folderId")
     List<Object[]> countByFolderIdForUser(@Param("userId") UUID userId);

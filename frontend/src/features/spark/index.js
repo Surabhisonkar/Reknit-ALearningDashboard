@@ -1,3 +1,4 @@
-export { useSparkFeed } from "./hooks/useSparkFeed.js";
-export { default as SparkAnimationCard } from "./components/SparkAnimationCard.jsx";
-export { default as SparkGameCard } from "./games/SparkGameCard.jsx";
+export { default as SparkSession } from "./components/SparkSession.jsx";
+export { default as SparkModeBar } from "./components/SparkModeBar.jsx";
+export { useSparkFolders } from "./hooks/useSparkFolders.js";
+export { SPARK_MODES, findSparkMode } from "./modes/sparkModes.js";

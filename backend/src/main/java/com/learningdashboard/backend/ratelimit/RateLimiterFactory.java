@@ -23,6 +23,12 @@ public class RateLimiterFactory {
         return new DistributedRateLimiter(proxyManager, "rl:visualize", Duration.ofSeconds(cfg.getWindowSeconds()), cfg.getMaxRequests());
     }
 
+    @Bean(name = "askRateLimiter")
+    public DistributedRateLimiter askRateLimiter(@Lazy ProxyManager<byte[]> proxyManager, RateLimitProperties props) {
+        var cfg = props.getAsk();
+        return new DistributedRateLimiter(proxyManager, "rl:ask", Duration.ofSeconds(cfg.getWindowSeconds()), cfg.getMaxRequests());
+    }
+
     /**
      * Rate limiting is keyed by authenticated user id, not IP — every
      * request past SecurityConfig already carries a validated Cognito

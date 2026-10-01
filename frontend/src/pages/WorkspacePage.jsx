@@ -5,6 +5,8 @@ import {
   useRegenerateConcept,
   useRelatedConcepts,
   RelatedConceptsPanel,
+  useConceptNotes,
+  ConceptNotesPanel,
   VisualizationRenderer,
 } from "../features/workspace";
 import { Button, OverflowMenu, ProgressDots } from "../shared/ui";
@@ -29,6 +31,7 @@ function WorkspaceContent({ conceptId }) {
   const history = useConceptVersions(conceptId, currentVersion);
   const regeneration = useRegenerateConcept(conceptId);
   const { related } = useRelatedConcepts(conceptId, currentVersion);
+  const { notes, remove: removeNote } = useConceptNotes(conceptId);
   const regenerating = regeneration.status === "loading";
 
   async function handleDelete() {
@@ -130,6 +133,7 @@ function WorkspaceContent({ conceptId }) {
 
       <div className="page-width">
         <RelatedConceptsPanel related={related} />
+        <ConceptNotesPanel notes={notes} onDelete={removeNote} />
       </div>
     </main>
   );

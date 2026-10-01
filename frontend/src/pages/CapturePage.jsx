@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { useExplainFlow, ExplanationRenderer } from "../features/generate";
 import { useVisualizeFlow, useSaveDraft, DraftPreview, DuplicateTitleModal } from "../features/capture";
@@ -20,8 +20,10 @@ import { visualizationTypeLabel } from "../shared/constants/visualizationTypes.j
 function CapturePage() {
   const navigate = useNavigate();
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  // Spark's "Make a visual" arrives with the chat pre-filled; a normal visit has no state.
+  const prefill = useLocation().state?.prefill;
+  const [title, setTitle] = useState(prefill?.title ?? "");
+  const [description, setDescription] = useState(prefill?.description ?? "");
 
   const explainFlow = useExplainFlow();
   const visualizeFlow = useVisualizeFlow();

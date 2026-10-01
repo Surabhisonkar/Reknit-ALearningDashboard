@@ -5,10 +5,11 @@ const FOCUSABLE =
 
 /**
  * Simple accessible modal: overlay + dialog, closes on Escape or overlay click.
+ * variant "sheet" docks it to the bottom of the screen (the page stays visible above).
  * Focus moves into the dialog when it opens (unless a child already took it
  * with autoFocus) and returns to whatever had focus before, once it closes.
  */
-export function Modal({ title, children, onClose }) {
+export function Modal({ title, children, onClose, variant = "center" }) {
   const dialogRef = useRef(null);
   const pendingRestoreRef = useRef(null);
   // Read during the first render - before any autoFocus child moves focus.
@@ -37,10 +38,10 @@ export function Modal({ title, children, onClose }) {
   }, [returnTo]);
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className={variant === "sheet" ? "modal-overlay modal-overlay-sheet" : "modal-overlay"} onClick={onClose}>
       <div
         ref={dialogRef}
-        className="modal-dialog"
+        className={variant === "sheet" ? "modal-dialog modal-dialog-sheet" : "modal-dialog"}
         role="dialog"
         aria-modal="true"
         aria-label={title}

@@ -1,6 +1,7 @@
 export { Button } from "./Buttons.jsx";
 export { Card } from "./Card.jsx";
 export { Icon } from "./Icon.jsx";
+export { SvgIcon } from "./icons.jsx";
 export { Pill } from "./Pill.jsx";
 export { Tabs } from "./Tabs.jsx";
 export { Modal } from "./Modal.jsx";

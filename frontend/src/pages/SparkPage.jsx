@@ -1,103 +1,39 @@
-import { useNavigate } from "react-router-dom";
-import { useCallback, useRef } from "react";
+import { useState } from "react";
 
-import { useSparkFeed, SparkAnimationCard, SparkGameCard } from "../features/spark";
-import { Pill } from "../shared/ui";
+import { useAuth } from "../auth";
+import { SparkModeBar, SparkSession, findSparkMode, useSparkFolders } from "../features/spark";
+import { NarratorProvider } from "../shared/narration";
 
 /**
- * Spark: an Instagram-Reels-style vertical feed of your saved animations,
- * with a quick mini-game interleaved every few cards to keep your
- * attention. Choose a specific library to revisit, or let it pull a
- * random mix from everything you've saved.
+ * Spark: revisit what you've saved, reels-style. Each mode/folder choice
+ * mounts a fresh session (via `key`), so switching never leaks old state.
  */
 function SparkPage() {
-  const navigate = useNavigate();
-  const { folders, source, setSource, items, status, loadMore } = useSparkFeed();
-  const reelRef = useRef(null);
-  const openConcept = useCallback((id) => navigate(`/workspace?conceptId=${id}`), [navigate]);
-
-  function handleScroll(event) {
-    const el = event.currentTarget;
-    const nearEnd = el.scrollTop + el.clientHeight >= el.scrollHeight - el.clientHeight * 0.6;
-    if (nearEnd && (status === "ready" || status === "loading-more")) {
-      loadMore();
-    }
-  }
+  const { accessToken } = useAuth();
+  const folders = useSparkFolders(accessToken);
+  const [modeId, setModeId] = useState("shuffle");
+  const [folder, setFolder] = useState("");
+  const mode = findSparkMode(modeId);
+  const needsChoice = mode.needsFolder && !folder;
 
   return (
-    <main className="spark-page">
-      <div className="spark-topbar page-width">
-        <div>
-          <Pill tone="coral">SPARK</Pill>
-          <p className="spark-subtitle">Short visual replays of what you've saved, with a quick game in between.</p>
-        </div>
-        <div className="spark-source-toggle">
-          <button
-            type="button"
-            className={`tab ${source === "all" ? "active" : ""}`}
-            onClick={() => setSource("all")}
-          >
-            Random, all libraries
-          </button>
-          <select
-            value={source === "all" ? "" : source}
-            onChange={(event) => setSource(event.target.value || "all")}
-            disabled={folders.length === 0}
-          >
-            <option value="">Choose a library...</option>
-            {folders.map((folder) => (
-              <option key={folder} value={folder}>
-                {folder}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {status === "loading" && (
-        <div className="spark-status page-width">
-          <p>Loading your Spark feed...</p>
-        </div>
-      )}
-
-      {status === "error" && (
-        <div className="spark-status page-width">
-          <h1>Couldn't load Spark</h1>
-          <p>Please try refreshing the page.</p>
-        </div>
-      )}
-
-      {status === "empty" && (
-        <div className="spark-status page-width">
-          <h1>Nothing to play yet</h1>
-          <p>
-            Spark plays back your saved <strong>animation</strong> visualizations. Create one from a topic to see it
-            here.
-          </p>
-          <button type="button" className="button" onClick={() => navigate("/create")}>
-            Create a concept
-          </button>
-        </div>
-      )}
-
-      {items.length > 0 && (
-        <div className="spark-reel" ref={reelRef} onScroll={handleScroll}>
-          {items.map((item) =>
-            item.kind === "concept" ? (
-              <SparkAnimationCard key={item.key} concept={item.concept} onOpen={openConcept} />
-            ) : (
-              <SparkGameCard key={item.key} />
-            )
-          )}
-          {status === "loading-more" && (
-            <div className="spark-slide spark-slide-loading">
-              <p>Loading more...</p>
-            </div>
-          )}
-        </div>
-      )}
-    </main>
+    <NarratorProvider>
+      <main className="spark-page">
+        <SparkModeBar modeId={mode.id} onModeChange={setModeId} folders={folders} folder={folder} onFolderChange={setFolder} />
+        {needsChoice ? (
+          <div className="spark-state">Choose a folder to deep-dive into.</div>
+        ) : (
+          <SparkSessionForMode key={`${mode.id}:${folder}`} mode={mode} folder={folder} accessToken={accessToken} />
+        )}
+      </main>
+    </NarratorProvider>
   );
+}
+
+/** Creates the mode's source once per mount, then runs the session. */
+function SparkSessionForMode({ mode, folder, accessToken }) {
+  const [source] = useState(() => mode.createSource(accessToken, { folder }));
+  return <SparkSession accessToken={accessToken} source={source} />;
 }
 
 export default SparkPage;

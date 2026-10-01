@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.learningdashboard.backend.common.exception.NotFoundException;
+import com.learningdashboard.backend.config.SparkMixProperties;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -20,7 +21,8 @@ class ConceptServiceFolderTest {
     private final ConceptRepository repository = mock(ConceptRepository.class);
     private final FolderLookup folderLookup = mock(FolderLookup.class);
     private final ConceptService service =
-            new ConceptService(repository, mock(ConceptVersionRepository.class), folderLookup);
+            new ConceptService(repository, mock(ConceptVersionRepository.class), folderLookup,
+                    new SparkFeedSampler(new SparkMixProperties()));
 
     private final UUID userId = UUID.randomUUID();
     private final UUID folderId = UUID.randomUUID();
@@ -57,6 +59,19 @@ class ConceptServiceFolderTest {
     void sparkFeedByAnUnknownFolderIsEmpty() {
         when(folderLookup.findIdByName(userId, "Nope")).thenReturn(Optional.empty());
         assertThat(service.randomSparkFeed(userId, "Nope", Set.of(), 10)).isEmpty();
+    }
+
+    @Test
+    void sparkFeedServesEveryVisualTypeAndSkipsWhatTheClientHasSeen() {
+        Concept animation = new Concept(userId, "A", "s", null, "animation", "{}", 1, null);
+        Concept mindMap = new Concept(userId, "M", "s", null, "mind_map", "{}", 1, null);
+        Concept image = new Concept(userId, "I", "s", null, "image", "{}", 1, null);
+        Concept diagram = new Concept(userId, "D", "s", null, "diagram", "{}", 1, null);
+        when(repository.findByUserIdOrderByCreatedAtDesc(userId)).thenReturn(List.of(animation, mindMap, image, diagram));
+
+        List<Concept> page = service.randomSparkFeed(userId, null, Set.of(diagram.getId()), 10);
+
+        assertThat(page).containsExactlyInAnyOrder(animation, mindMap, image);
     }
 
     @Test
