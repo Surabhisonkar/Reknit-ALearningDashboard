@@ -65,16 +65,12 @@ app:
     visual-provider-order: ${VISUAL_PROVIDER_ORDER:gemini}
     embedding-provider-order: ${EMBEDDING_PROVIDER_ORDER:gemini}
     claude-model: ${CLAUDE_MODEL:claude-sonnet-4-6}
-    # gemini-2.5-flash was retired for this account ("no longer available to
-    # new users" - confirmed from a real worker-log 404 on 2026-09-20/21,
-    # error body pointed here). gemini-2.5-flash-image is left as-is - no
-    # evidence yet that the visual model needs the same change; verify once
-    # a real Visualize job runs (see PROJECT_HANDOFF / project-status.md).
+    
     gemini-text-model: ${GEMINI_TEXT_MODEL:gemini-3.6-flash}
-    gemini-visual-model: ${GEMINI_VISUAL_MODEL:gemini-2.5-flash-image}
+    gemini-visual-model: ${GEMINI_VISUAL_MODEL:gemini-3.1-flash-image}
     gemini-embedding-model: ${GEMINI_EMBEDDING_MODEL:gemini-embedding-001}  # text-embedding-004 was shut down 2026-01-14
     openai-text-model: ${OPENAI_TEXT_MODEL:gpt-4.1}
-    request-timeout-ms: ${AI_REQUEST_TIMEOUT_MS:20000}
+    request-timeout-ms: ${AI_REQUEST_TIMEOUT_MS:60000}
     max-retries: ${AI_MAX_RETRIES:2}
 
   rate-limit:
