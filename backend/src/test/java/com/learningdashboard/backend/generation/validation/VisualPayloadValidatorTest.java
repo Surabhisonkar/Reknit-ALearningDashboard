@@ -120,6 +120,27 @@ class VisualPayloadValidatorTest {
     }
 
     @Test
+    void acceptsImageWithAValidFallbackDiagram() throws Exception {
+        JsonNode payload = mapper.readTree("""
+                { "type": "image", "version": 1, "imagePrompt": "A leaf", "artifactId": "", "altText": "A leaf",
+                  "fallbackDiagram": { "type": "diagram", "version": 1,
+                    "elements": [{ "id": "e1", "elementType": "process", "label": "Light",
+                                    "accessibilityLabel": "Light reaches the leaf" }],
+                    "connections": [] } }
+                """);
+        assertThatCode(() -> validator.validate(payload)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void rejectsImageWithAMalformedFallbackDiagram() throws Exception {
+        JsonNode payload = mapper.readTree("""
+                { "type": "image", "version": 1, "imagePrompt": "A leaf", "artifactId": "", "altText": "A leaf",
+                  "fallbackDiagram": { "type": "diagram", "version": 1, "elements": [], "connections": [] } }
+                """);
+        assertThatThrownBy(() -> validator.validate(payload)).isInstanceOf(GenerationException.class);
+    }
+
+    @Test
     void rejectsUnknownVisualizationType() throws Exception {
         JsonNode payload = mapper.readTree("""
                 { "type": "video", "url": "https://example.com" }

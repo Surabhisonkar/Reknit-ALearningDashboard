@@ -323,7 +323,7 @@ SPRING_PROFILES_ACTIVE=worker mvn spring-boot:run       # worker service (port 8
 | `DB_URL` / `DB_USERNAME` / `DB_PASSWORD` | Postgres connection |
 | `REDIS_HOST` / `REDIS_PORT` | Distributed rate limiter backing store |
 | `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` / `OPENAI_API_KEY` | Provider keys |
-| `TEXT_PROVIDER_ORDER` | default `claude,gemini` (add `,openai` to include it) |
+| `TEXT_PROVIDER_ORDER` | default `gemini,claude,openai` (free tier first; a provider with no key is skipped) |
 | `VISUAL_PROVIDER_ORDER` / `EMBEDDING_PROVIDER_ORDER` | default `gemini` |
 | `AI_REQUEST_TIMEOUT_MS` / `AI_MAX_RETRIES` | default `20000` / `2` |
 | `AWS_REGION` | default `us-east-1` |

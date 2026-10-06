@@ -61,7 +61,11 @@ app:
     openai-api-key: ${OPENAI_API_KEY:}
     # Ordered fallback chains per capability - first provider is tried first,
     # remaining ones are only used if it fails after its own retries.
-    text-provider-order: ${TEXT_PROVIDER_ORDER:claude,gemini}
+    # Gemini (free tier) goes first for everything; the paid providers are
+    # only reached when it fails, and a provider with no API key set is
+    # dropped from the chain at startup. If the whole chain fails, the
+    # Visualize pipeline builds the visual from the user's text by rules.
+    text-provider-order: ${TEXT_PROVIDER_ORDER:gemini,claude,openai}
     visual-provider-order: ${VISUAL_PROVIDER_ORDER:gemini}
     embedding-provider-order: ${EMBEDDING_PROVIDER_ORDER:gemini}
     claude-model: ${CLAUDE_MODEL:claude-sonnet-4-6}

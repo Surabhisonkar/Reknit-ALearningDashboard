@@ -9,7 +9,7 @@ import { useAuth } from "../../../auth";
  * Owns Capture's Visualize step: submits a job, polls it, and holds the
  * resulting *draft* - nothing is saved until the user confirms (see
  * useSaveDraft). Also owns the pre-save "try again": `regenerate()`
- * resubmits the exact same input and replaces the draft in place (the
+ * resubmits the exact same input (including the requested visual type) and replaces the draft in place (the
  * previous draft stays on screen until the new one arrives). `discard()`
  * just drops local state - the abandoned draft's generated assets expire
  * on the server by themselves.
@@ -25,7 +25,7 @@ export function useVisualizeFlow() {
       run(async () => {
         const job = await submitVisualizeJob(accessToken, {
           conceptText: input.conceptText,
-          preferredVisualizationType: "auto",
+          preferredVisualizationType: input.preferredType ?? "auto",
           sourceExplainJobId: input.sourceExplainJobId ?? null,
         });
         const completed = await pollJob(accessToken, job.id);
@@ -37,8 +37,8 @@ export function useVisualizeFlow() {
   );
 
   const visualize = useCallback(
-    (conceptText, { sourceExplainJobId } = {}) => {
-      lastInput.current = { conceptText, sourceExplainJobId };
+    (conceptText, { sourceExplainJobId, preferredType } = {}) => {
+      lastInput.current = { conceptText, sourceExplainJobId, preferredType };
       return submit(lastInput.current);
     },
     [submit]

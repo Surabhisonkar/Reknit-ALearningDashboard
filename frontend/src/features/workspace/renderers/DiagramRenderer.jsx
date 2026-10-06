@@ -1,70 +1,69 @@
-const ELEMENT_COLORS = {
-  process: "var(--teal)",
-  decision: "var(--yellow)",
-  terminator: "var(--coral)",
-  data_store: "var(--coral-dark)",
-  actor: "var(--muted)",
-  note: "var(--line)",
-};
+import { useMemo } from "react";
+import { MarkerType } from "@xyflow/react";
 
-/** Consumes the shape produced by domain/visualizationMappers.js's mapDiagram. */
-function DiagramRenderer({ visualization }) {
-  const { elements, connections } = visualization;
-  const elementsById = new Map(elements.map((el) => [el.id, el]));
+import DiagramNode from "../graph/DiagramNode.jsx";
+import GraphCanvas from "../graph/GraphCanvas.jsx";
+import { layoutDiagram, sidesBetween } from "../graph/layout.js";
+import { useCompactCanvas } from "../graph/useCompactCanvas.js";
+import { useEditableGraph } from "../graph/useEditableGraph.js";
 
-  const maxX = Math.max(...elements.map((el) => el.x + el.width), 800);
-  const maxY = Math.max(...elements.map((el) => el.y + el.height), 600);
+const NODE_TYPES = { diagram: DiagramNode };
+/* Matches --muted, the connection stroke colour (SVG markers cannot read CSS variables). */
+const ARROW = { type: MarkerType.ArrowClosed, width: 18, height: 18, color: "#735f59" };
 
-  function centerOf(el) {
-    return { x: el.x + el.width / 2, y: el.y + el.height / 2 };
-  }
+/**
+ * Consumes the shape produced by domain/visualizationMappers.js's
+ * mapDiagram. Rendered with React Flow. This is also what an image falls
+ * back to (the AI's flowchart of the same idea, or the rule-based one),
+ * so it must read well with nothing but short labels.
+ *
+ * `onLayoutChange` is the editing hook-up point (see useEditableGraph).
+ */
+function DiagramCanvas({ visualization, compact, onLayoutChange }) {
+  const layout = useMemo(() => layoutDiagram(visualization, { compact }), [visualization, compact]);
+  const graph = useEditableGraph(layout, { onLayoutChange });
+
+  // Arrows leave and enter by whichever sides face each other right now, so they follow a dragged box.
+  const edges = useMemo(() => {
+    const nodesById = new Map(graph.nodes.map((n) => [n.id, n]));
+    return layout.edges.map((edge) => {
+      const sides = sidesBetween(nodesById.get(edge.source), nodesById.get(edge.target));
+      return { ...edge, sourceHandle: `out-${sides.source}`, targetHandle: `in-${sides.target}`, markerEnd: ARROW };
+    });
+  }, [graph.nodes, layout.edges]);
+
+  const elementTypes = [...new Set(visualization.elements.map((el) => el.elementType))];
 
   return (
     <div className="diagram-renderer">
-      <svg viewBox={`0 0 ${maxX} ${maxY}`} className="diagram-svg" role="img" aria-label="Diagram">
-        {connections.map((conn) => {
-          const from = elementsById.get(conn.sourceId);
-          const to = elementsById.get(conn.targetId);
-          if (!from || !to) return null;
-          const fromCenter = centerOf(from);
-          const toCenter = centerOf(to);
-          return (
-            <g key={conn.id}>
-              <line x1={fromCenter.x} y1={fromCenter.y} x2={toCenter.x} y2={toCenter.y} className="diagram-connection" />
-              {conn.label && (
-                <text x={(fromCenter.x + toCenter.x) / 2} y={(fromCenter.y + toCenter.y) / 2} className="diagram-connection-label">
-                  {conn.label}
-                </text>
-              )}
-            </g>
-          );
-        })}
+      <GraphCanvas
+        nodes={graph.nodes}
+        edges={edges}
+        nodeTypes={NODE_TYPES}
+        onNodesChange={graph.onNodesChange}
+        isEdited={graph.isEdited}
+        onResetLayout={graph.resetLayout}
+        ariaLabel="Diagram"
+      />
 
-        {elements.map((el) => (
-          <g key={el.id} role="img" aria-label={el.accessibilityLabel}>
-            <rect
-              x={el.x} y={el.y} width={el.width} height={el.height}
-              rx={el.elementType === "decision" ? 16 : 8}
-              className="diagram-element"
-              style={{ fill: ELEMENT_COLORS[el.elementType] ?? "var(--paper-deep)" }}
-            />
-            <text x={el.x + el.width / 2} y={el.y + el.height / 2} className="diagram-element-label">
-              {el.label}
-            </text>
-          </g>
-        ))}
-      </svg>
-
-      <ul className="diagram-legend" aria-hidden="true">
-        {[...new Set(elements.map((el) => el.elementType))].map((type) => (
-          <li key={type}>
-            <span className="diagram-legend-swatch" style={{ background: ELEMENT_COLORS[type] ?? "var(--paper-deep)" }} />
-            {type.replace("_", " ")}
-          </li>
-        ))}
-      </ul>
+      {elementTypes.length > 1 && (
+        <ul className="diagram-legend" aria-hidden="true">
+          {elementTypes.map((type) => (
+            <li key={type}>
+              <span className={`diagram-legend-swatch diagram-node-${type}`} />
+              {type.replace("_", " ")}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
+}
+
+/** Keyed by layout mode: crossing the phone breakpoint starts from that mode's own layout. */
+function DiagramRenderer(props) {
+  const compact = useCompactCanvas();
+  return <DiagramCanvas key={compact ? "compact" : "wide"} compact={compact} {...props} />;
 }
 
 export default DiagramRenderer;

@@ -18,7 +18,7 @@ public class AiProperties {
     private String geminiApiKey;
     private String openaiApiKey;
 
-    private List<String> textProviderOrder = List.of("claude", "gemini");
+    private List<String> textProviderOrder = List.of("gemini", "claude", "openai");
     private List<String> visualProviderOrder = List.of("gemini");
     private List<String> embeddingProviderOrder = List.of("gemini");
 

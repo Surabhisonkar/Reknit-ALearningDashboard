@@ -123,6 +123,16 @@ public class VisualPayloadValidator {
     private void validateImage(JsonNode p, List<String> errors) {
         requireNonBlank(p, "imagePrompt", 500, errors);
         requireNonBlank(p, "altText", 160, errors);
+        // Optional (older answers and stored concepts have none), but if it is
+        // there it will be rendered, so it must be a well-formed diagram.
+        JsonNode fallbackDiagram = p.path("fallbackDiagram");
+        if (fallbackDiagram.isObject()) {
+            List<String> diagramErrors = new ArrayList<>();
+            validateDiagram(fallbackDiagram, diagramErrors);
+            diagramErrors.forEach(error -> errors.add("fallbackDiagram: " + error));
+        } else if (!fallbackDiagram.isMissingNode() && !fallbackDiagram.isNull()) {
+            errors.add("fallbackDiagram must be an object when present");
+        }
     }
 
     private void requireNonBlank(JsonNode parent, String field, int maxLength, List<String> errors) {

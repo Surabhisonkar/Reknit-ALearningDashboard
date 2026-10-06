@@ -9,6 +9,8 @@ import com.learningdashboard.backend.storage.ArtifactStorage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,11 +21,23 @@ import org.springframework.stereotype.Component;
  * new artifact ids filled in. Attaching happens later, only if the draft
  * is actually saved (see {@code ConceptVersionWriter}).
  *
- * <p>Extracted unchanged from {@code VisualizePipeline}: same provider
- * calls, same payload rebuilding, minus the attach step.
+ * <p><b>Failsafe.</b> A picture is never allowed to fail the whole visual:
+ * <ul>
+ *   <li><b>image</b> - if the image cannot be produced and the payload
+ *   carries a {@code fallbackDiagram} (the AI's own flowchart of the same
+ *   idea), that diagram becomes the result. With no diagram to fall back
+ *   on, the failure propagates and {@code VisualizePipeline} builds one
+ *   from the concept text.</li>
+ *   <li><b>animation</b> - a scene whose picture cannot be produced is
+ *   kept without one (the frontend plays coded motion for it). After the
+ *   first failure the remaining scene pictures are skipped rather than
+ *   retrying a provider that is evidently down, scene after scene.</li>
+ * </ul>
  */
 @Component
 public class VisualAssetGenerator {
+
+    private static final Logger log = LoggerFactory.getLogger(VisualAssetGenerator.class);
 
     private final VisualGenerationProvider visualProvider;
     private final ArtifactStorage artifactStorage;
@@ -34,35 +48,59 @@ public class VisualAssetGenerator {
     }
 
     public Result generate(VisualizationPayload payload, UUID userId, UUID generationJobId) {
-        List<UUID> artifactIds = new ArrayList<>();
-
         if (payload instanceof ImagePayload image) {
-            Artifact artifact = generateAndUpload(image.imagePrompt(), userId, generationJobId);
-            artifactIds.add(artifact.getId());
-            return new Result(
-                    new ImagePayload(image.version(), image.imagePrompt(), artifact.getId().toString(), image.altText()),
-                    artifactIds);
+            return generateImage(image, userId, generationJobId);
         }
-
         if (payload instanceof AnimationPayload animation) {
-            List<AnimationPayload.Scene> updatedScenes = new ArrayList<>();
-            for (AnimationPayload.Scene scene : animation.scenes()) {
-                if (scene.needsVisualAsset() && scene.visualPrompt() != null && !scene.visualPrompt().isBlank()) {
-                    Artifact artifact = generateAndUpload(scene.visualPrompt(), userId, generationJobId);
-                    artifactIds.add(artifact.getId());
-                    updatedScenes.add(new AnimationPayload.Scene(
-                            scene.id(), scene.order(), scene.title(), scene.narration(),
-                            scene.durationSeconds(), scene.transitionToNext(), scene.needsVisualAsset(),
-                            scene.visualPrompt(), List.of(artifact.getId().toString())));
-                } else {
-                    updatedScenes.add(scene);
-                }
-            }
-            return new Result(new AnimationPayload(animation.version(), updatedScenes), artifactIds);
+            return generateSceneImages(animation, userId, generationJobId);
         }
-
         // mind_map and diagram carry no generated visual assets today
-        return new Result(payload, artifactIds);
+        return new Result(payload, List.of());
+    }
+
+    private Result generateImage(ImagePayload image, UUID userId, UUID generationJobId) {
+        try {
+            Artifact artifact = generateAndUpload(image.imagePrompt(), userId, generationJobId);
+            return new Result(
+                    new ImagePayload(image.version(), image.imagePrompt(), artifact.getId().toString(),
+                            image.altText(), image.fallbackDiagram()),
+                    List.of(artifact.getId()));
+        } catch (RuntimeException e) {
+            if (image.fallbackDiagram() == null) {
+                throw e;
+            }
+            log.warn("Job {}: image generation failed ({}), using the AI-written flowchart instead.",
+                    generationJobId, e.getMessage());
+            return new Result(image.fallbackDiagram(), List.of());
+        }
+    }
+
+    private Result generateSceneImages(AnimationPayload animation, UUID userId, UUID generationJobId) {
+        List<UUID> artifactIds = new ArrayList<>();
+        List<AnimationPayload.Scene> updatedScenes = new ArrayList<>();
+        boolean imagesAvailable = true;
+
+        for (AnimationPayload.Scene scene : animation.scenes()) {
+            boolean wantsImage = scene.needsVisualAsset() && scene.visualPrompt() != null && !scene.visualPrompt().isBlank();
+            if (!wantsImage || !imagesAvailable) {
+                updatedScenes.add(scene);
+                continue;
+            }
+            try {
+                Artifact artifact = generateAndUpload(scene.visualPrompt(), userId, generationJobId);
+                artifactIds.add(artifact.getId());
+                updatedScenes.add(new AnimationPayload.Scene(
+                        scene.id(), scene.order(), scene.title(), scene.narration(),
+                        scene.durationSeconds(), scene.transitionToNext(), scene.needsVisualAsset(),
+                        scene.visualPrompt(), List.of(artifact.getId().toString())));
+            } catch (RuntimeException e) {
+                imagesAvailable = false;
+                log.warn("Job {}: scene image generation failed ({}), remaining scenes will play without pictures.",
+                        generationJobId, e.getMessage());
+                updatedScenes.add(scene);
+            }
+        }
+        return new Result(new AnimationPayload(animation.version(), updatedScenes), artifactIds);
     }
 
     private Artifact generateAndUpload(String prompt, UUID userId, UUID generationJobId) {

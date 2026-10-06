@@ -55,4 +55,10 @@ class VisualizationPromptBuilderTest {
         String systemPrompt = new VisualizationPromptBuilder().buildSystemPrompt();
         assertThat(systemPrompt).containsIgnoringCase("decide the number of scenes");
     }
+
+    @Test
+    void systemPromptAsksForAFlowchartTwinWithEveryImage() {
+        String systemPrompt = new VisualizationPromptBuilder().buildSystemPrompt();
+        assertThat(systemPrompt).contains("fallbackDiagram").contains("REQUIRED for \"image\"");
+    }
 }

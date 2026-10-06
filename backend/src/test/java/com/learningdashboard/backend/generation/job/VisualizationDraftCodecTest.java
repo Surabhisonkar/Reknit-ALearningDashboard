@@ -21,7 +21,7 @@ class VisualizationDraftCodecTest {
     private final UUID artifactId = UUID.randomUUID();
     private final VisualizationDraft draft = new VisualizationDraft(
             "Photosynthesis", "Plants turn light into sugar.", "Biology",
-            new ImagePayload(1, "a leaf in sunlight", artifactId.toString(), "A green leaf"),
+            new ImagePayload(1, "a leaf in sunlight", artifactId.toString(), "A green leaf", null),
             List.of(artifactId));
 
     @Test

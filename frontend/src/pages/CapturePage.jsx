@@ -9,7 +9,11 @@ import { Button } from "../shared/ui";
 import { Icon } from "../shared/ui/Icon";
 import { Pill } from "../shared/ui/Pill";
 import { ErrorBoundary } from "../shared/ErrorBoundary.jsx";
-import { visualizationTypeLabel } from "../shared/constants/visualizationTypes.js";
+import {
+  DEFAULT_VISUALIZATION_TYPE_CHOICE,
+  VISUALIZATION_TYPE_CHOICES,
+  visualizationTypeLabel,
+} from "../shared/constants/visualizationTypes.js";
 
 /**
  * Capture: topic/notes -> (optional) inline explanation -> inline
@@ -22,6 +26,7 @@ function CapturePage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [preferredType, setPreferredType] = useState(DEFAULT_VISUALIZATION_TYPE_CHOICE);
 
   const explainFlow = useExplainFlow();
   const visualizeFlow = useVisualizeFlow();
@@ -47,7 +52,7 @@ function CapturePage() {
 
     saveDraft.clearError();
     try {
-      await visualizeFlow.visualize(conceptText, { sourceExplainJobId: explainFlow.jobId });
+      await visualizeFlow.visualize(conceptText, { sourceExplainJobId: explainFlow.jobId, preferredType });
     } catch {
       // visualizeFlow.error already carries the message - nothing else to do here.
     }
@@ -85,9 +90,9 @@ function CapturePage() {
     <main className="capture-page page-width">
       <div className="capture-heading">
         <div>
-          <Pill tone="coral">Reknit / CREATE</Pill>
+          <Pill tone="coral">[APP NAME] / CREATE</Pill>
           <h1>What are we untangling today?</h1>
-          <p>Give it a topic - notes are optional, Reknit can explain it from scratch.</p>
+          <p>Give it a topic - notes are optional, [App Name] can explain it from scratch.</p>
         </div>
       </div>
 
@@ -110,7 +115,7 @@ function CapturePage() {
         </label>
 
         <div className="capture-footer">
-          <span>Just a topic is enough. Reknit fills in the rest.</span>
+          <span>Just a topic is enough. [App Name] fills in the rest.</span>
           <span>{description.length} characters</span>
           <div className="capture-actions">
             <Button
@@ -166,6 +171,21 @@ function CapturePage() {
 
       {canVisualize && (
         <div className="generate-actions">
+          <fieldset className="type-choice" disabled={visualizing || saveDraft.saving}>
+            <legend>Show it as</legend>
+            {VISUALIZATION_TYPE_CHOICES.map((choice) => (
+              <label key={choice.value} className="type-choice-option">
+                <input
+                  type="radio"
+                  name="visualizationType"
+                  value={choice.value}
+                  checked={preferredType === choice.value}
+                  onChange={() => setPreferredType(choice.value)}
+                />
+                <span>{choice.label}</span>
+              </label>
+            ))}
+          </fieldset>
           <Button onClick={handleVisualize} disabled={visualizing || saveDraft.saving}>
             {visualizing && !draft ? "Visualizing..." : draft ? "Visualize again from these notes" : "Visualize this"}{" "}
             <Icon>{"->"}</Icon>

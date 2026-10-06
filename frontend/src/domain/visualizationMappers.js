@@ -7,6 +7,17 @@
  * API JSON - only what these functions hand them.
  */
 
+/**
+ * Node positions a person set by dragging: { [nodeId]: {x, y} }, or null.
+ * The backend does not store these yet (the "Editable visuals" phase adds
+ * it); reading the field now means saved layouts will render the day it
+ * does, with no renderer change.
+ */
+function mapSavedPositions(json) {
+  const positions = json.layoutHints?.positions;
+  return positions && typeof positions === "object" ? positions : null;
+}
+
 function mapMindMap(json) {
   const nodesById = new Map((json.nodes ?? []).map((n) => [n.id, n]));
   return {
@@ -19,6 +30,7 @@ function mapMindMap(json) {
       .map((e) => ({ sourceId: e.sourceId, targetId: e.targetId, label: e.relationshipLabel ?? "" })),
     orientation: json.layoutHints?.orientation ?? "radial",
     rootNodeId: json.layoutHints?.rootNodeId ?? json.nodes?.[0]?.id ?? null,
+    savedPositions: mapSavedPositions(json),
     citations: (json.citations ?? []).map((c) => ({ nodeId: c.nodeId, sourceText: c.sourceText })),
   };
 }
@@ -44,6 +56,7 @@ function mapDiagram(json) {
       targetId: c.targetId,
       label: c.label ?? "",
     })),
+    savedPositions: mapSavedPositions(json),
   };
 }
 
@@ -72,6 +85,8 @@ function mapImage(json) {
     imagePrompt: json.imagePrompt,
     artifactId: json.artifactId || null,
     altText: json.altText ?? "",
+    // The same idea as a flowchart - shown if the picture can't be, or on "Show as diagram".
+    fallbackDiagram: json.fallbackDiagram?.elements?.length ? mapDiagram(json.fallbackDiagram) : null,
   };
 }
 

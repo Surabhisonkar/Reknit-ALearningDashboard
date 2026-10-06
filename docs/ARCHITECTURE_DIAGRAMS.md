@@ -1646,3 +1646,62 @@ hand-editing it after a large change. The schema section should be
 updated the moment a new Flyway migration lands, not batched up. This
 document is only useful as long as it's trusted to be current; treat a
 stale version of it as worse than no diagram at all.
+
+---
+
+## Visual failsafe (added 2026-10-06)
+
+Full design: `backend/docs/design/visual-failsafe-and-provider-routing.md`. `generation.fallback` depends only on `generation.model` and `generation.validation`; nothing outside `generation.pipeline` calls it.
+
+```mermaid
+classDiagram
+    class VisualizePipeline {
+        +run(userId, jobId, conceptText, preferredType) Result
+    }
+    class TextGenerationProvider {
+        <<interface>>
+        +generateText(systemPrompt, userPrompt) String
+        +generateAndParse(systemPrompt, userPrompt, parser) T
+        +name() String
+    }
+    class FallbackTextGenerationProvider
+    class VisualAssetGenerator {
+        +generate(payload, userId, jobId) Result
+    }
+    class FallbackVisualizationService {
+        +buildDraft(preferredType, conceptText) VisualizationDraft
+        +buildPayload(type, conceptText) VisualizationPayload
+    }
+    class ConceptTextOutliner {
+        +outline(conceptText) ConceptOutline
+    }
+    class ConceptOutline {
+        +title String
+        +summary String
+        +points List
+        +sequential boolean
+    }
+    class FallbackVisualBuilder {
+        <<interface>>
+        +type() String
+        +build(outline) VisualizationPayload
+    }
+    class MindMapFallbackBuilder
+    class DiagramFallbackBuilder
+    class AnimationFallbackBuilder
+    class ImagePayload {
+        +fallbackDiagram DiagramPayload
+    }
+
+    VisualizePipeline --> TextGenerationProvider
+    VisualizePipeline --> VisualAssetGenerator
+    VisualizePipeline --> FallbackVisualizationService
+    TextGenerationProvider <|.. FallbackTextGenerationProvider
+    FallbackVisualizationService --> ConceptTextOutliner
+    FallbackVisualizationService --> FallbackVisualBuilder : one bean per type
+    FallbackVisualBuilder <|.. MindMapFallbackBuilder
+    FallbackVisualBuilder <|.. DiagramFallbackBuilder
+    FallbackVisualBuilder <|.. AnimationFallbackBuilder
+    ConceptTextOutliner --> ConceptOutline
+    VisualAssetGenerator --> ImagePayload
+```

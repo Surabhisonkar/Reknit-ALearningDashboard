@@ -98,6 +98,20 @@ assistant's sandbox, where Gemini is blocked). Save the five concepts in
 muscles ↔ posture both ways and keeps the controls out, and it prints a
 measured `RELATED_MAX_DISTANCE` to replace the 0.35 guess.
 
+## Phase 6b — Visual Failsafe + React Flow ✅ BUILT 2026-10-06, WAITING ON THE USER'S `mvn test`
+
+The user always gets a visual. Design and file list: `backend/docs/design/visual-failsafe-and-provider-routing.md`. Verify guide: `backend/docs/VERIFY_FAILSAFE.md`.
+
+- Text providers run Gemini first, then Claude, then OpenAI. An unusable or unsafe answer counts as a failure and the next provider is asked.
+- Image fails: the flowchart the AI wrote alongside it is shown (React Flow).
+- No AI usable at all: a mind map, flowchart or animation is built from the user's own text by rules, one builder class per type.
+- Mind maps and flowcharts render with React Flow; animations play coded motion when a scene has no picture.
+- Capture has an optional type picker (Let AI choose / Mind map / Image or diagram / Animation).
+
+## Phase 6c — Editable Visuals 🟡 FOUNDATION ONLY
+
+Built: drag, zoom, pan, Reset layout, and the `onLayoutChange` / `savedPositions` hook-up points. Not built: saving positions (needs an endpoint and a design review), editing labels, adding or removing nodes.
+
 ## Phase 7 — Folders as Real Entities + Library Redesign 🟡 BUILT, WAITING ON THE USER'S RUN
 Built 2026-09-28 on `feature/phase-7-folders`; design and decisions in
 `backend/docs/design/phase-7-folders.md`. A new `folder` module (entity,
@@ -220,6 +234,10 @@ the free tier, monitoring/alerting actually wired to something you'll see
 | 2026-09-26 | **Standing rule:** confirm questions, scope and any deviation with the user *before* generating code. A better idea still gets asked, never just done. |
 | 2026-09-27 | Related concepts: own controller; stored-embedding query with a configurable cut-off. |
 | 2026-09-27 | `VisualizePipeline` (not `VisualizeJobHandler`) calls `VisualAssetGenerator`. The diagrams now match the code. |
+| 2026-10-06 | Visual failsafe: triggers on outages, unusable output and content-safety rejections; silent (no badge); saveable. |
+| 2026-10-06 | Provider order is Gemini first for everything, then Claude, then OpenAI. Per-type routing was considered and dropped. |
+| 2026-10-06 | Mind maps and diagrams render with React Flow (`@xyflow/react`); layout is computed client-side, AI coordinates are ignored. |
+| 2026-10-06 | "Let AI choose" stays the default on Capture; explicit types are optional. |
 | 2026-09-28 | Phase 7 goes before the artifact-lifecycle fix; the lifecycle's open questions are parked in `docs/open-questions/`. |
 | 2026-09-28 | Phase 7 decisions (module, auto-filing, colours, name collation, API compatibility, delete modes, UI): see `backend/docs/design/phase-7-folders.md`. |
 | 2026-09-28 | Deliveries are a single git patch against `main` plus a list of changed files, not a full zip. Each phase is its own branch, tested by the user, then merged. Questions come as multiple choice mid-work, then work resumes. |
