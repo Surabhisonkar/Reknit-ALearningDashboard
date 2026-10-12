@@ -41,7 +41,6 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
-
       redis:
         image: redis:7
         ports:
@@ -51,7 +50,6 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
-
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -63,12 +61,6 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      # Java 21 is used here rather than 25 because GitHub-hosted runners'
-      # available Temurin distributions lag behind the very newest LTS by
-      # a few months; the pom.xml's <java.version> controls what actually
-      # gets compiled against, so this doesn't have to track your local
-      # machine's JDK exactly. Bump this once hosted 25 images are common.
-
       - name: Wait for MySQL to accept connections
         run: |
           for i in $(seq 1 30); do
@@ -76,7 +68,6 @@ jobs:
             echo "Waiting for MySQL... ($i/30)"
             sleep 2
           done
-
       - name: Compile
         run: mvn -B -ntp clean compile
 
@@ -137,7 +128,6 @@ jobs:
           tags: |
             type=raw,value=latest
             type=sha,format=short
-
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -166,19 +156,26 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      - name: OWASP Dependency-Check
-        uses: dependency-check/Dependency-Check_Action@main
+      # Cache the vulnerability database so only the first run (and
+      # a weekly refresh) pays the full download cost.
+      - name: Cache Dependency-Check database
+        uses: actions/cache@v4
         with:
-          project: "learning-dashboard-backend"
-          path: "backend"
-          format: "HTML"
-          # Fails the job on any dependency with a known CVE at HIGH
-          # severity or above (CVSS >= 7). Tune this threshold once you've
-          # triaged the first report - starting strict is easier to relax
-          # than starting loose and hoping someone tightens it later.
-          args: >
-            --failOnCVSS 7
-            --enableRetired
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: depcheck-data-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            depcheck-data-${{ runner.os }}-
+
+     
+      - name: OWASP Dependency-Check
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: >-
+          mvn -B -ntp org.owasp:dependency-check-maven:12.1.0:check
+          -Dformat=HTML
+          -DfailBuildOnCVSS=7
+          -DnvdApiKey="$NVD_API_KEY"
+          -DoutputDirectory=${{ github.workspace }}/reports
 
       - name: Upload dependency-check report
         if: always()
