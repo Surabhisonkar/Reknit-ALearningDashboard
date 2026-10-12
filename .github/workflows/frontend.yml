@@ -1,0 +1,110 @@
+name: Frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  lint-build-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        env:
+          # Placeholders. env.js only checks that these are present, so the
+          # CI build needs no real configuration.
+          VITE_API_BASE_URL: https://example.invalid
+          VITE_COGNITO_DOMAIN: example.auth.us-east-1.amazoncognito.com
+          VITE_COGNITO_CLIENT_ID: ci-placeholder
+          VITE_COGNITO_REDIRECT_URI: https://example.invalid/auth/callback
+          VITE_COGNITO_LOGOUT_REDIRECT_URI: https://example.invalid/
+        run: npm run build
+
+      - name: npm audit (fails on any known vulnerability)
+        run: npm audit --audit-level=low
+
+  # Builds with the real client settings and publishes the static site to S3.
+  # Skipped until the AWS_DEPLOY_ROLE_ARN repository variable is set.
+  deploy:
+    needs: lint-build-audit
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.AWS_DEPLOY_ROLE_ARN != ''
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency: frontend-deploy
+    permissions:
+      id-token: write   # OIDC sign-in to AWS, so no long-lived keys are stored
+      contents: read
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        env:
+          # Public client settings, stored as repository variables (not secrets):
+          # every VITE_* value ends up in the browser bundle anyway.
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_COGNITO_DOMAIN: ${{ vars.VITE_COGNITO_DOMAIN }}
+          VITE_COGNITO_CLIENT_ID: ${{ vars.VITE_COGNITO_CLIENT_ID }}
+          VITE_COGNITO_REDIRECT_URI: ${{ vars.VITE_COGNITO_REDIRECT_URI }}
+          VITE_COGNITO_LOGOUT_REDIRECT_URI: ${{ vars.VITE_COGNITO_LOGOUT_REDIRECT_URI }}
+        run: npm run build
+
+      - name: Sign in to AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Upload to S3
+        env:
+          BUCKET: ${{ vars.FRONTEND_BUCKET }}
+        run: |
+          # Hashed assets can be cached forever; index.html must never be.
+          aws s3 sync dist "s3://$BUCKET" --delete --exclude index.html \
+            --cache-control "public,max-age=31536000,immutable"
+          aws s3 cp dist/index.html "s3://$BUCKET/index.html" \
+            --cache-control "no-cache"
+
+      - name: Invalidate CloudFront
+        if: vars.CLOUDFRONT_DISTRIBUTION_ID != ''
+        env:
+          DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/index.html"
