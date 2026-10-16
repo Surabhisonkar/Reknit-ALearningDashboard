@@ -87,7 +87,7 @@ A few decisions that shaped the rest of the code:
 | Layer | What |
 | --- | --- |
 | Frontend | React 19, Vite, Tailwind CSS 4, React Router 7 |
-| Backend | Java 21, Spring Boot 3.5, Spring Security (OAuth2 resource server), Spring Data JPA |
+| Backend | Java 21, Spring Boot 4.1, Spring Security (OAuth2 resource server), Spring Data JPA |
 | Data | MySQL 8 with Flyway migrations, Redis |
 | AWS | Cognito (auth), SQS (job queue), S3 (generated images) |
 | AI | Anthropic Claude, Google Gemini, OpenAI |

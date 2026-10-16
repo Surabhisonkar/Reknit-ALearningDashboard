@@ -1,10 +1,10 @@
 package com.learningdashboard.backend.generation.pipeline;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learningdashboard.backend.common.exception.GenerationException;
 import com.learningdashboard.backend.generation.validation.ContentSafetyValidator;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Reads the one text field a chat prompt asks for ({"answer": ...} or

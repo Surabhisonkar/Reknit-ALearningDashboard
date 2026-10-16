@@ -1,11 +1,11 @@
 package com.learningdashboard.backend.generation.validation;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.learningdashboard.backend.common.exception.GenerationException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.JsonNode;
 
 /**
  * The trust boundary for {@code ExplanationPayload} - nothing downstream

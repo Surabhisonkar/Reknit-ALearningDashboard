@@ -2,8 +2,6 @@ package com.learningdashboard.backend.generation.job;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learningdashboard.backend.concept.ConceptDraft;
 import com.learningdashboard.backend.concept.VersionAppended;
 import com.learningdashboard.backend.generation.model.ImagePayload;
@@ -11,6 +9,8 @@ import com.learningdashboard.backend.generation.model.VisualizationDraft;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 class VisualizationDraftCodecTest {
 

@@ -1,6 +1,5 @@
 package com.learningdashboard.backend.generation.provider;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learningdashboard.backend.config.AiProperties;
 import com.learningdashboard.backend.generation.provider.anthropic.ClaudeTextProvider;
 import com.learningdashboard.backend.generation.provider.gemini.GeminiEmbeddingProvider;
@@ -17,6 +16,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * The only class in the codebase that knows which concrete provider

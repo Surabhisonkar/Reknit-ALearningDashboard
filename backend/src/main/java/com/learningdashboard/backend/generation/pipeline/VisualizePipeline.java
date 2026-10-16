@@ -1,7 +1,5 @@
 package com.learningdashboard.backend.generation.pipeline;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learningdashboard.backend.common.exception.GenerationException;
 import com.learningdashboard.backend.generation.model.VisualizationDraft;
 import com.learningdashboard.backend.generation.model.VisualizationPayload;
@@ -14,6 +12,8 @@ import com.learningdashboard.backend.rag.RetrievalService;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Backs "Visualize". Takes finished concept text (the user's own

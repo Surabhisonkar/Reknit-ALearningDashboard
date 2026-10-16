@@ -1,8 +1,8 @@
 package com.learningdashboard.backend.web.dto;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.time.Instant;
 import java.util.UUID;
+import tools.jackson.databind.JsonNode;
 
 /**
  * {@code folder} is the folder's name, or "" when unfiled (unchanged contract).

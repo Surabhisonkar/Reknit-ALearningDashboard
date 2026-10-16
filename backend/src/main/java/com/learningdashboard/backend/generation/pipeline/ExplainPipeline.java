@@ -1,7 +1,5 @@
 package com.learningdashboard.backend.generation.pipeline;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learningdashboard.backend.common.exception.GenerationException;
 import com.learningdashboard.backend.generation.model.ExplanationPayload;
 import com.learningdashboard.backend.generation.prompt.ExplainPromptBuilder;
@@ -9,6 +7,8 @@ import com.learningdashboard.backend.generation.provider.TextGenerationProvider;
 import com.learningdashboard.backend.generation.validation.ContentSafetyValidator;
 import com.learningdashboard.backend.generation.validation.ExplanationValidator;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Backs the "Explain" flow. Exactly one provider call — structuring a

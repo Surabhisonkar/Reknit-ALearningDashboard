@@ -1,8 +1,8 @@
 package com.learningdashboard.backend.web.dto;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.time.Instant;
 import java.util.UUID;
+import tools.jackson.databind.JsonNode;
 
 public record JobResponse(
         UUID id,
