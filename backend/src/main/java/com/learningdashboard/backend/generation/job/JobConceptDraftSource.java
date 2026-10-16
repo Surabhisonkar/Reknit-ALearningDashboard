@@ -1,17 +1,17 @@
 package com.learningdashboard.backend.generation.job;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.learningdashboard.backend.common.exception.NotFoundException;
 import com.learningdashboard.backend.concept.ConceptDraft;
 import com.learningdashboard.backend.concept.ConceptDraftSource;
 import com.learningdashboard.backend.concept.DraftClaim;
-import com.learningdashboard.backend.concept.DraftNotSaveableException;
 import com.learningdashboard.backend.concept.DraftNotSaveableException.Reason;
+import com.learningdashboard.backend.concept.DraftNotSaveableException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Adapter: drafts live on completed VISUALIZE job rows (Handoff Part 5 -

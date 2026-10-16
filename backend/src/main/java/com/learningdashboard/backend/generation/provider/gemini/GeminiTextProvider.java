@@ -1,16 +1,16 @@
 package com.learningdashboard.backend.generation.provider.gemini;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.learningdashboard.backend.config.AiProperties;
 import com.learningdashboard.backend.generation.provider.TextGenerationProvider;
 import com.learningdashboard.backend.generation.provider.resilience.ResilientProviderExecutor;
 import java.time.Duration;
 import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
-import org.springframework.boot.http.client.ClientHttpRequestFactorySettings;
+import org.springframework.boot.http.client.HttpClientSettings;
 import org.springframework.web.client.RestClient;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 public class GeminiTextProvider implements TextGenerationProvider {
 
@@ -27,7 +27,7 @@ public class GeminiTextProvider implements TextGenerationProvider {
         this.executor = executor;
         this.objectMapper = objectMapper;
         this.restClient = RestClient.builder()
-                .requestFactory(ClientHttpRequestFactoryBuilder.detect().build(ClientHttpRequestFactorySettings.defaults()
+                .requestFactory(ClientHttpRequestFactoryBuilder.detect().build(HttpClientSettings.defaults()
                         .withReadTimeout(Duration.ofMillis(aiProperties.getRequestTimeoutMs()))))
                 .baseUrl("https://generativelanguage.googleapis.com/v1beta/models/"
                         + aiProperties.getGeminiTextModel() + ":generateContent")

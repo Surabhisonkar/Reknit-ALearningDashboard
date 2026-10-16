@@ -9,8 +9,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learningdashboard.backend.common.exception.NotFoundException;
 import com.learningdashboard.backend.concept.Concept;
 import com.learningdashboard.backend.concept.ConceptNote;
@@ -22,6 +20,8 @@ import com.learningdashboard.backend.generation.pipeline.ConceptChatPipeline;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 class ChatJobHandlersTest {
 

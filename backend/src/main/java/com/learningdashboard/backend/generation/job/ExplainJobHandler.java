@@ -1,8 +1,8 @@
 package com.learningdashboard.backend.generation.job;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.learningdashboard.backend.generation.pipeline.ExplainPipeline;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.JsonNode;
 
 /** EXPLAIN jobs - moved verbatim from the former {@code JobProcessingService.processExplain}. */
 @Component

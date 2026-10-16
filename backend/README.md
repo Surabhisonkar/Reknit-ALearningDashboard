@@ -71,11 +71,13 @@ this backend has had.
    instead of `ClientHttpRequestFactories.get(settings)`, and
    `ClientHttpRequestFactorySettings.defaults()` instead of a `.DEFAULTS`
    constant). Fixed in all five provider adapters (Claude, 3×Gemini,
-   OpenAI). **Any future provider adapter must use the new
-   `org.springframework.boot.http.client` API, not the old one.**
+   OpenAI). Spring Boot 4 then renamed `ClientHttpRequestFactorySettings`
+   to `HttpClientSettings` (same package, same `defaults()`/`with*` API).
+   **Any future provider adapter must use
+   `ClientHttpRequestFactoryBuilder.detect().build(HttpClientSettings...)`.**
 3. **Missing `resilience4j-all` dependency**: `ResilientProviderExecutor`
    uses `io.github.resilience4j.decorators.Decorators`, which lives in
-   `resilience4j-all`, not `resilience4j-spring-boot3` alone. Added as an
+   `resilience4j-all`, not `resilience4j-spring-boot4` alone. Added as an
    explicit dependency.
 4. **`@Lazy` needed on injection points, not just on `@Bean` methods**:
    marking `claudeTextProvider()` etc. `@Lazy` in `ProviderFactory` only

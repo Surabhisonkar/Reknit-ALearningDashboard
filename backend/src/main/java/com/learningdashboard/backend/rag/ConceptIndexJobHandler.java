@@ -1,6 +1,5 @@
 package com.learningdashboard.backend.rag;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.learningdashboard.backend.concept.Concept;
 import com.learningdashboard.backend.concept.ConceptRepository;
 import com.learningdashboard.backend.generation.job.GenerationJob;
@@ -11,6 +10,7 @@ import com.learningdashboard.backend.generation.job.JobType;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Worker side of {@link QueuedConceptIndexer}: embeds the concept's

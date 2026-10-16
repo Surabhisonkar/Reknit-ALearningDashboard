@@ -3,12 +3,12 @@ package com.learningdashboard.backend.generation.pipeline;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learningdashboard.backend.common.exception.GenerationException;
 import com.learningdashboard.backend.config.ContentSafetyProperties;
 import com.learningdashboard.backend.generation.validation.ContentSafetyValidator;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.ObjectMapper;
 
 class ChatReplyParserTest {
 

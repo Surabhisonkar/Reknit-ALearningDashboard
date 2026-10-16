@@ -1,11 +1,11 @@
 package com.learningdashboard.backend.generation.job;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.learningdashboard.backend.concept.ConceptRegenerationService;
 import com.learningdashboard.backend.concept.VersionAppended;
 import com.learningdashboard.backend.generation.pipeline.VisualizePipeline;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.JsonNode;
 
 /**
  * VISUALIZE jobs. Runs the (persistence-free) pipeline, then picks one of
