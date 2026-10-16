@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learningdashboard.backend.common.exception.NotFoundException;
 import com.learningdashboard.backend.concept.DraftClaim;
 import com.learningdashboard.backend.concept.DraftNotSaveableException;
@@ -15,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.ObjectMapper;
 
 class JobConceptDraftSourceTest {
 

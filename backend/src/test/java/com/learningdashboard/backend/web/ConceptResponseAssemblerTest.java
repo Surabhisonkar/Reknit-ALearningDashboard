@@ -8,7 +8,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learningdashboard.backend.concept.Concept;
 import com.learningdashboard.backend.folder.FolderColor;
 import com.learningdashboard.backend.folder.FolderLabel;
@@ -19,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.ObjectMapper;
 
 class ConceptResponseAssemblerTest {
 

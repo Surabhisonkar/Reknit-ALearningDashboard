@@ -1,22 +1,22 @@
 package com.learningdashboard.backend.web;
 
-import com.learningdashboard.backend.folder.FolderLabel;
-import com.learningdashboard.backend.folder.FolderSummary;
-import com.learningdashboard.backend.web.dto.FolderResponse;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learningdashboard.backend.concept.Concept;
 import com.learningdashboard.backend.concept.ConceptNote;
 import com.learningdashboard.backend.concept.ConceptVersion;
-import com.learningdashboard.backend.rag.RelatedConcept;
+import com.learningdashboard.backend.folder.FolderLabel;
+import com.learningdashboard.backend.folder.FolderSummary;
 import com.learningdashboard.backend.generation.job.GenerationJob;
+import com.learningdashboard.backend.rag.RelatedConcept;
 import com.learningdashboard.backend.web.dto.ConceptNoteResponse;
 import com.learningdashboard.backend.web.dto.ConceptResponse;
 import com.learningdashboard.backend.web.dto.ConceptVersionResponse;
 import com.learningdashboard.backend.web.dto.ConceptVersionSummaryResponse;
+import com.learningdashboard.backend.web.dto.FolderResponse;
 import com.learningdashboard.backend.web.dto.JobResponse;
 import com.learningdashboard.backend.web.dto.RelatedConceptResponse;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class ResponseMapper {

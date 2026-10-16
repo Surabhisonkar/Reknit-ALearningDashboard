@@ -1,8 +1,5 @@
 package com.learningdashboard.backend.generation.job;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.learningdashboard.backend.common.exception.GenerationException;
 import com.learningdashboard.backend.concept.ConceptDraft;
 import com.learningdashboard.backend.concept.VersionAppended;
@@ -11,6 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * The single owner of the Visualize job's {@code result_payload} JSON

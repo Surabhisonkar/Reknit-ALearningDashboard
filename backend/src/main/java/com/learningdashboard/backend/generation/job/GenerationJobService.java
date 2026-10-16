@@ -1,8 +1,5 @@
 package com.learningdashboard.backend.generation.job;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.learningdashboard.backend.common.exception.NotFoundException;
 import com.learningdashboard.backend.generation.model.ChatMessage;
 import java.util.List;
@@ -10,6 +7,9 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * The only thing an HTTP controller talks to for job creation. Creates

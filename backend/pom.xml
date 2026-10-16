@@ -7,8 +7,9 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <!-- 3.5.x is the first line with tested Java 25 support (per Spring's compatibility matrix). -->
-    <version>3.5.9</version>
+    <!-- Spring Boot 4.1 (Spring Framework 7, Jackson 3, Hibernate 7, Security 7).
+         Baseline is Java 17; tested through Java 25. -->
+    <version>4.1.1</version>
     <relativePath/>
   </parent>
 
@@ -27,7 +28,8 @@
          the safe default for CI runners that may not have 25 yet. Both compile
          cleanly against this Spring Boot version. -->
     <java.version>21</java.version>
-    <bucket4j.version>8.10.1</bucket4j.version>
+    <bucket4j.version>8.21.0</bucket4j.version>
+    <resilience4j.version>2.4.0</resilience4j.version>
     <aws-sdk.version>2.28.16</aws-sdk.version>
   </properties>
 
@@ -35,7 +37,12 @@
     <!-- Web -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
+      <artifactId>spring-boot-starter-webmvc</artifactId>
+    </dependency>
+    <!-- RestClient + ClientHttpRequestFactoryBuilder used by the AI providers -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-restclient</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -45,7 +52,7 @@
     <!-- Auth: Cognito-issued JWTs validated as an OAuth2 Resource Server -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+      <artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
     </dependency>
 
     <!-- Persistence -->
@@ -58,9 +65,11 @@
       <artifactId>mysql-connector-j</artifactId>
       <scope>runtime</scope>
     </dependency>
+    <!-- Boot 4 moved Flyway auto-configuration into its own module; flyway-core
+         alone would silently skip migrations on startup. -->
     <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-core</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-flyway</artifactId>
     </dependency>
     <dependency>
       <groupId>org.flywaydb</groupId>
@@ -80,28 +89,33 @@
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-tracing-bridge-otel</artifactId>
     </dependency>
+    <!-- Boot 4: tracing auto-configuration lives in its own module -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-micrometer-tracing-opentelemetry</artifactId>
+    </dependency>
 
     <!-- Resilience: circuit breaker around provider calls -->
     <dependency>
       <groupId>io.github.resilience4j</groupId>
-      <artifactId>resilience4j-spring-boot3</artifactId>
-      <version>2.2.0</version>
+      <artifactId>resilience4j-spring-boot4</artifactId>
+      <version>${resilience4j.version}</version>
     </dependency>
     <dependency>
       <groupId>io.github.resilience4j</groupId>
       <artifactId>resilience4j-all</artifactId>
-      <version>2.2.0</version>
+      <version>${resilience4j.version}</version>
     </dependency>
     <!-- Distributed rate limiting: Bucket4j backed by Redis, so limits are
          shared across every ECS task instead of being per-task. -->
     <dependency>
       <groupId>com.bucket4j</groupId>
-      <artifactId>bucket4j-core</artifactId>
+      <artifactId>bucket4j_jdk17-core</artifactId>
       <version>${bucket4j.version}</version>
     </dependency>
     <dependency>
       <groupId>com.bucket4j</groupId>
-      <artifactId>bucket4j-redis</artifactId>
+      <artifactId>bucket4j_jdk17-lettuce</artifactId>
       <version>${bucket4j.version}</version>
     </dependency>
     <dependency>
@@ -133,18 +147,19 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.springframework.security</groupId>
-      <artifactId>spring-security-test</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security-oauth2-resource-server-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Testcontainers 2.x renamed its modules with a testcontainers- prefix -->
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-mysql</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
-      <artifactId>mysql</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>junit-jupiter</artifactId>
+      <artifactId>testcontainers-junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

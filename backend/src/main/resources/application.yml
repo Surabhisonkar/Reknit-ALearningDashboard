@@ -20,7 +20,7 @@ spring:
     properties:
       hibernate:
         jdbc.batch_size: 25
-        # Hibernate 6 autodetects the MySQL dialect from the JDBC driver -
+        # Hibernate 7 autodetects the MySQL dialect from the JDBC driver -
         # no explicit hibernate.dialect needed, and safer not to hardcode
         # one that might drift from your actual RDS MySQL version.
   flyway:

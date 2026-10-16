@@ -1,12 +1,12 @@
 package com.learningdashboard.backend.generation.validation;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.learningdashboard.backend.common.exception.GenerationException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.JsonNode;
 
 /**
  * The hard trust boundary between "whatever the LLM said" and "what the

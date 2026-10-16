@@ -1,10 +1,10 @@
 package com.learningdashboard.backend.generation.job;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learningdashboard.backend.common.exception.GenerationException;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 /** Small shared helper for reading/writing a job's JSON columns - one place for the "not valid JSON" error handling. */
 @Component
