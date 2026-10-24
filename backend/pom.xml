@@ -31,6 +31,10 @@
     <bucket4j.version>8.21.0</bucket4j.version>
     <resilience4j.version>2.4.0</resilience4j.version>
     <aws-sdk.version>2.28.16</aws-sdk.version>
+   <!-- TEMPORARY security overrides. Remove each once the Spring Boot version
+     in <parent> manages this version or newer. -->
+    <tomcat.version>11.0.27</tomcat.version>
+    <mysql.version>26.7.0</mysql.version>
   </properties>
 
   <dependencies>
