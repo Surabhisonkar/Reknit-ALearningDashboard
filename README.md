@@ -4,6 +4,8 @@ A visual learning workspace. You give it a topic or a page of notes, and it turn
 
 I built Reknit because my own notes kept turning into a place where ideas went to be forgotten. Rereading three pages to recover one concept is slow, and most of the time I didn't bother. I wanted revisiting an old idea to take ten seconds and feel closer to looking at a picture than to studying.
 
+**[Try the live demo →](https://surabhisonkar.github.io/Reknit-ALearningDashboard/)** No sign-up: you're signed in as a demo user with a sample library. The demo runs entirely in your browser, so AI responses are simulated and anything you create is saved only in that browser (a *Reset demo* button puts the sample library back).
+
 ## What it does
 
 **Capture.** Type a topic, or paste your own notes. Reknit can write an explanation first if you want one, then generates a visualization. The result comes back as a draft: you can save it, regenerate it or throw it away, and nothing is stored until you save.
@@ -141,6 +143,21 @@ npm run dev                   # http://localhost:5173
 
 Every `VITE_*` value is compiled into the browser bundle, so only public client settings belong in that file.
 
+### Demo mode (no backend)
+
+```bash
+cd frontend
+npm ci
+npm run dev:demo              # or: npm run build:demo
+```
+
+`VITE_DEMO_MODE=true` (set in `frontend/.env.demo`) builds a version that needs no backend, database or Cognito:
+
+- **Mock API.** [Mock Service Worker](https://mswjs.io) intercepts the app's `fetch` calls in the browser and answers them on the same routes, status codes and JSON shapes as the Spring Boot API (`src/mocks/handlers.js`). The `src/api` modules and every page run unchanged.
+- **Simulated jobs.** Explain, Visualize, Regenerate and Spark's Ask return `202` and finish after a second or two of polling, like the real queue. Their output is built from your topic and notes in the same payload shapes the worker validates (`src/mocks/simulatedAi.js`).
+- **Saved in the browser.** The sample library (`src/mocks/seed.js`) and your edits live in `localStorage`, so they survive a refresh until you press *Reset demo*.
+- **Stubbed sign-in and storage.** Visitors start signed in as a demo user, and generated images come from local object URLs instead of presigned S3 links.
+
 ### Configuration
 
 The variables you are most likely to touch. The full set, with defaults, is in [`backend/src/main/resources/application.yml`](backend/src/main/resources/application.yml).
@@ -219,7 +236,7 @@ The scripts in `frontend/scripts/` are end-to-end checks that drive the real UI 
 
 ## CI/CD
 
-Two GitHub Actions workflows live in `.github/workflows/`. Each runs only when its half of the repository changes.
+Three GitHub Actions workflows live in `.github/workflows/`. Each runs only when its part of the repository changes.
 
 **Backend** compiles the service and runs the tests against MySQL 8 and Redis 7 service containers, then scans the dependencies with OWASP Dependency-Check. On `main`, once the tests pass, it builds the Docker image and pushes it to GitHub Container Registry as `ghcr.io/<owner>/reknit-backend`, tagged `latest` and with the commit SHA. This needs no configuration.
 
@@ -234,6 +251,8 @@ Two GitHub Actions workflows live in `.github/workflows/`. Each runs only when i
 | `VITE_API_BASE_URL` and the four `VITE_COGNITO_*` values | The same settings as `frontend/.env.example` |
 
 The role needs `s3:ListBucket`, `s3:PutObject` and `s3:DeleteObject` on the bucket, plus `cloudfront:CreateInvalidation` if you use CloudFront. No AWS keys are stored in GitHub.
+
+**Demo site** builds the frontend in demo mode and publishes it to GitHub Pages on every push to `main` that touches `frontend/`. It sets Vite's `base` to `/<repo>/` and copies `index.html` to `404.html`, so deep links such as `/library` still load on refresh. It needs Pages turned on once, with the source set to GitHub Actions (Settings → Pages).
 
 ## Status
 

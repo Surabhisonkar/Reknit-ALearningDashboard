@@ -5,20 +5,33 @@
  * wrong instead of hunting through the codebase for stray `import.meta.env`
  * reads.
  */
+
+// VITE_DEMO_MODE=true builds a backend-free demo: Mock Service Worker answers
+// every /api call in the browser (src/mocks) and sign-in is stubbed, so none
+// of the backend or Cognito settings below are needed.
+const demoMode = import.meta.env.VITE_DEMO_MODE === "true";
+
 function required(name) {
   const value = import.meta.env[name];
-  if (!value) {
+  if (!value && !demoMode) {
     // Fails fast and loud at startup rather than producing a confusing
     // runtime error deep inside a fetch call later.
     throw new Error(
       `Missing required environment variable ${name}. Check your .env file (see .env.example).`
     );
   }
-  return value;
+  return value ?? "";
 }
 
 export const config = {
-  apiBaseUrl: required("VITE_API_BASE_URL"),
+  demoMode,
+
+  // Vite's `base` - "/" locally, "/<repo>/" on GitHub Pages. The router and
+  // the mock service worker both need it.
+  basePath: import.meta.env.BASE_URL,
+
+  // In demo mode requests stay same-origin so the service worker can catch them.
+  apiBaseUrl: demoMode ? "" : required("VITE_API_BASE_URL"),
 
   cognito: {
     domain: required("VITE_COGNITO_DOMAIN"), // e.g. your-app.auth.us-east-1.amazoncognito.com

@@ -1,0 +1,69 @@
+name: Demo site (GitHub Pages)
+
+# Publishes the backend-free demo build to GitHub Pages: Mock Service Worker answers the API in
+# the browser, so the site needs no servers and costs nothing to host.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/demo-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: demo-pages
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build demo
+        env:
+          # Pages serves a project site from /<repo>/.
+          BASE_PATH: /${{ github.event.repository.name }}/
+        run: npm run build:demo
+
+      - name: SPA fallback for deep links
+        # Pages has no rewrite rules; serving the app as the 404 page lets
+        # /library, /workspace?conceptId=... and friends load on refresh.
+        run: cp dist/index.html dist/404.html
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
