@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet } from "react-router-dom";
 
 import { Icon } from "../shared/ui/Icon";
 import { useAuth } from "../auth";
+import { config } from "../config/env.js";
 
 const menuLinks = [
   { to: "/library", label: "Library" },
@@ -81,12 +82,35 @@ function AccountControl() {
   );
 }
 
+/** Only in demo builds: says what's simulated and offers a way back to the starting library. */
+function DemoBanner() {
+  async function handleReset() {
+    // Same module instance the mock API uses, loaded on demand like the mocks themselves.
+    const { resetDemoData } = await import("../mocks/db.js");
+    resetDemoData();
+    window.location.reload();
+  }
+
+  return (
+    <div className="demo-banner" role="note">
+      <span>
+        <strong>Live demo.</strong> No backend here: AI responses are simulated, and your changes are saved only in this browser.
+      </span>
+      <button type="button" onClick={handleReset}>
+        Reset demo
+      </button>
+    </div>
+  );
+}
+
 function Layout() {
   return (
     <div className="app-shell">
       <a href="#main" className="skip-link">
         Skip to content
       </a>
+
+      {config.demoMode && <DemoBanner />}
 
       <header className="topbar">
         <Link className="brand" to="/" aria-label="Reknit home">

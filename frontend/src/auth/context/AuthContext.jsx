@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
+import { config } from "../../config/env.js";
 import { redirectToLogin, redirectToLogout, refreshTokens, revokeToken } from "../api/cognitoAuthClient.js";
+import { createDemoSession } from "../api/demoAuthClient.js";
 import { clearSession, isExpired, loadSession, saveSession } from "../storage/sessionStore.js";
 import { AuthContext } from "./authContextObject.js";
 
@@ -17,7 +20,35 @@ function toStoredSession(tokens) {
   };
 }
 
-export function AuthProvider({ children }) {
+export function AuthProvider(props) {
+  return config.demoMode ? <DemoAuthProvider {...props} /> : <CognitoAuthProvider {...props} />;
+}
+
+/**
+ * Demo mode: visitors start signed in as the demo user, and signing in
+ * again is instant - no Hosted UI redirect, so the demo works on any host
+ * without a Cognito app client.
+ */
+function DemoAuthProvider({ children }) {
+  const [session, setSession] = useState(() => createDemoSession());
+  const navigate = useNavigate();
+
+  const login = useCallback(() => setSession(createDemoSession()), []);
+  const logout = useCallback(() => {
+    setSession(null);
+    // Leave any RequireAuth page first, or it would sign straight back in.
+    navigate("/");
+  }, [navigate]);
+
+  const value = useMemo(
+    () => ({ isAuthenticated: Boolean(session), isLoading: false, session, login, logout, _applySession: () => session }),
+    [session, login, logout]
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+function CognitoAuthProvider({ children }) {
   const [session, setSession] = useState(() => loadSession());
   const [isLoading] = useState(false);
 

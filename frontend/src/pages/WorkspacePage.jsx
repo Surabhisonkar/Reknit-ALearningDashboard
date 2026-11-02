@@ -1,4 +1,4 @@
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   useConcept,
   useConceptVersions,
@@ -33,10 +33,11 @@ function WorkspaceContent({ conceptId }) {
   const { related } = useRelatedConcepts(conceptId, currentVersion);
   const { notes, remove: removeNote } = useConceptNotes(conceptId);
   const regenerating = regeneration.status === "loading";
+  const navigate = useNavigate();
 
   async function handleDelete() {
     await remove();
-    window.location.href = "/library";
+    navigate("/library");
   }
 
   async function handleRegenerate() {

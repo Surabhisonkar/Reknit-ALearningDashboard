@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import { Button } from "../shared/ui/Buttons";
 import { Icon } from "../shared/ui/Icon";
 import { Pill } from "../shared/ui/Pill";
@@ -8,9 +10,9 @@ function FeatureCard({ tone, icon, title, text, link }) {
       <div className="feature-icon">{icon}</div>
       <h3>{title}</h3>
       <p>{text}</p>
-      <a href="/workspace">
+      <Link to="/workspace">
         {link} <span>{"->"}</span>
-      </a>
+      </Link>
     </article>
   );
 }

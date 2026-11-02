@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { handleLoginCallback, decodeIdTokenClaims, useAuth } from "../auth";
 import { updateProfile } from "../api/accountApi.js";
@@ -56,7 +56,7 @@ function AuthCallbackPage() {
       <main className="page-width" style={{ padding: "4rem 0", textAlign: "center" }}>
         <h1>Sign-in failed</h1>
         <p>{error}</p>
-        <a href="/">Return home</a>
+        <Link to="/">Return home</Link>
       </main>
     );
   }
