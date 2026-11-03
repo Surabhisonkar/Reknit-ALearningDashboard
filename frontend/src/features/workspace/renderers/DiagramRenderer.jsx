@@ -1,3 +1,5 @@
+import MermaidDiagram from "./MermaidDiagram.jsx";
+
 const ELEMENT_COLORS = {
   process: "var(--teal)",
   decision: "var(--yellow)",
@@ -9,6 +11,12 @@ const ELEMENT_COLORS = {
 
 /** Consumes the shape produced by domain/visualizationMappers.js's mapDiagram. */
 function DiagramRenderer({ visualization }) {
+  if (visualization.syntax === "mermaid") return <MermaidDiagram visualization={visualization} />;
+  return <PositionedDiagram visualization={visualization} />;
+}
+
+/** Version-1 diagrams: model-positioned boxes drawn directly as SVG. */
+function PositionedDiagram({ visualization }) {
   const { elements, connections } = visualization;
   const elementsById = new Map(elements.map((el) => [el.id, el]));
 

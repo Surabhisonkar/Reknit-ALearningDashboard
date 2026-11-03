@@ -4,6 +4,7 @@ import com.learningdashboard.backend.concept.DraftNotSaveableException;
 import com.learningdashboard.backend.concept.DuplicateTitleException;
 import com.learningdashboard.backend.common.exception.ForbiddenException;
 import com.learningdashboard.backend.common.exception.GenerationException;
+import com.learningdashboard.backend.generation.edit.InvalidVisualizationEditException;
 import com.learningdashboard.backend.common.exception.NotFoundException;
 import com.learningdashboard.backend.folder.DuplicateFolderNameException;
 import com.learningdashboard.backend.folder.InvalidFolderRequestException;
@@ -57,6 +58,15 @@ public class GlobalExceptionHandler {
         body.put("code", "DUPLICATE_FOLDER_NAME");
         body.put("name", ex.getName());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    /** A user's edit of a visualization failed the same checks a generated one must pass; the details say which. */
+    @ExceptionHandler(InvalidVisualizationEditException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidVisualizationEdit(InvalidVisualizationEditException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("error", ex.getMessage());
+        body.put("details", ex.getDetails());
+        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(InvalidFolderRequestException.class)

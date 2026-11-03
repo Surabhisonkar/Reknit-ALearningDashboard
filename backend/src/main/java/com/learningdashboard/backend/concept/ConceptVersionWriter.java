@@ -36,9 +36,18 @@ public class ConceptVersionWriter {
      * @return the concept as saved, with its cache pointing at {@code versionNumber}
      */
     public Concept write(Concept concept, int versionNumber, ConceptDraft draft) {
+        return write(concept, versionNumber, draft, true);
+    }
+
+    /**
+     * @param reindex false skips step 4, for a version whose title and summary
+     *                didn't change (a user's own edit of the visual), so saving
+     *                it costs no embedding call
+     */
+    public Concept write(Concept concept, int versionNumber, ConceptDraft draft, boolean reindex) {
         ConceptVersion version = conceptService.saveVersion(new ConceptVersion(
                 concept.getId(), versionNumber, draft.title(), draft.summary(),
-                draft.visualizationType(), draft.visualizationPayloadJson()));
+                draft.visualizationType(), draft.visualizationPayloadJson(), draft.sourceText()));
 
         if (!draft.artifactIds().isEmpty()) {
             artifactLinker.link(draft.artifactIds(), concept.getUserId(), concept.getId(), version.getId());
@@ -48,7 +57,9 @@ public class ConceptVersionWriter {
                 draft.visualizationPayloadJson(), draft.payloadSchemaVersion());
         Concept saved = conceptService.save(concept);
 
-        conceptIndexer.requestIndexing(saved.getId(), saved.getUserId());
+        if (reindex) {
+            conceptIndexer.requestIndexing(saved.getId(), saved.getUserId());
+        }
         return saved;
     }
 }

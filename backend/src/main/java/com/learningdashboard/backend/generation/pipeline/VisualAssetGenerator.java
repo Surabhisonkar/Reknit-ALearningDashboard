@@ -19,18 +19,23 @@ import org.springframework.stereotype.Component;
  * new artifact ids filled in. Attaching happens later, only if the draft
  * is actually saved (see {@code ConceptVersionWriter}).
  *
- * <p>Extracted unchanged from {@code VisualizePipeline}: same provider
- * calls, same payload rebuilding, minus the attach step.
+ * <p>Illustrations get their picture from the visual provider chain
+ * (Qwen-Image first by default); animations get their scene images, then
+ * the MP4 from {@link AnimationVideoRenderer}, which is an artifact like
+ * any other.
  */
 @Component
 public class VisualAssetGenerator {
 
     private final VisualGenerationProvider visualProvider;
     private final ArtifactStorage artifactStorage;
+    private final AnimationVideoRenderer videoRenderer;
 
-    public VisualAssetGenerator(VisualGenerationProvider visualProvider, ArtifactStorage artifactStorage) {
+    public VisualAssetGenerator(VisualGenerationProvider visualProvider, ArtifactStorage artifactStorage,
+                                AnimationVideoRenderer videoRenderer) {
         this.visualProvider = visualProvider;
         this.artifactStorage = artifactStorage;
+        this.videoRenderer = videoRenderer;
     }
 
     public Result generate(VisualizationPayload payload, UUID userId, UUID generationJobId) {
@@ -40,7 +45,8 @@ public class VisualAssetGenerator {
             Artifact artifact = generateAndUpload(image.imagePrompt(), userId, generationJobId);
             artifactIds.add(artifact.getId());
             return new Result(
-                    new ImagePayload(image.version(), image.imagePrompt(), artifact.getId().toString(), image.altText()),
+                    new ImagePayload(image.version(), image.imagePrompt(), artifact.getId().toString(),
+                            image.altText(), image.labels()),
                     artifactIds);
         }
 
@@ -50,15 +56,19 @@ public class VisualAssetGenerator {
                 if (scene.needsVisualAsset() && scene.visualPrompt() != null && !scene.visualPrompt().isBlank()) {
                     Artifact artifact = generateAndUpload(scene.visualPrompt(), userId, generationJobId);
                     artifactIds.add(artifact.getId());
-                    updatedScenes.add(new AnimationPayload.Scene(
-                            scene.id(), scene.order(), scene.title(), scene.narration(),
-                            scene.durationSeconds(), scene.transitionToNext(), scene.needsVisualAsset(),
-                            scene.visualPrompt(), List.of(artifact.getId().toString())));
+                    updatedScenes.add(scene.withAssetArtifactIds(List.of(artifact.getId().toString())));
                 } else {
                     updatedScenes.add(scene);
                 }
             }
-            return new Result(new AnimationPayload(animation.version(), updatedScenes), artifactIds);
+            AnimationPayload withAssets = new AnimationPayload(animation.version(), updatedScenes, "");
+            // The MP4 is rendered last, once every scene image it shows exists.
+            UUID videoId = videoRenderer.render(withAssets, userId, generationJobId);
+            if (videoId == null) {
+                return new Result(withAssets, artifactIds);
+            }
+            artifactIds.add(videoId);
+            return new Result(new AnimationPayload(animation.version(), updatedScenes, videoId.toString()), artifactIds);
         }
 
         // mind_map and diagram carry no generated visual assets today

@@ -75,12 +75,24 @@ public class VisualizePipeline {
         JsonNode visualizationNode = parsed.path("visualization");
 
         validator.validate(visualizationNode);
+        requireRequestedType(visualizationNode, preferredType);
         VisualizationPayload payload = objectMapper.convertValue(visualizationNode, VisualizationPayload.class);
 
         VisualAssetGenerator.Result assets = assetGenerator.generate(payload, userId, generationJobId);
 
         VisualizationDraft draft = new VisualizationDraft(title, summary, folder, assets.payload(), assets.artifactIds());
         return new Result(draft, rawResponse);
+    }
+
+    /** The user picked the type in the UI, so a different one is a failed generation, not a substitute. */
+    private void requireRequestedType(JsonNode visualizationNode, String preferredType) {
+        String actual = visualizationNode.path("type").asText();
+        if (preferredType != null && !"auto".equals(preferredType) && !preferredType.equals(actual)) {
+            throw new GenerationException(
+                    "The AI response didn't match the expected structure.",
+                    GenerationException.Code.SCHEMA_VALIDATION_FAILED,
+                    List.of("visualization.type must be " + preferredType + ", got " + actual));
+        }
     }
 
     private String requireField(JsonNode parsed, String field) {

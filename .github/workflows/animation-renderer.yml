@@ -1,0 +1,104 @@
+name: Animation renderer
+
+# Builds the Remotion render service image (animation-renderer/Dockerfile) and
+# checks it actually renders: the container starts, answers /health and turns
+# a two-scene storyboard into an MP4. On main the image is then pushed to
+# GitHub Container Registry as ghcr.io/<owner>/reknit-animation-renderer,
+# tagged latest and with the commit SHA. Needs no configuration.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "animation-renderer/**"
+      - "packages/storyboard/**"
+      - ".github/workflows/animation-renderer.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "animation-renderer/**"
+      - "packages/storyboard/**"
+      - ".github/workflows/animation-renderer.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Built from the repository root: the image also copies packages/storyboard.
+      # animation-renderer/Dockerfile.dockerignore keeps the rest of the repo out of the context.
+      - name: Build the image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: animation-renderer/Dockerfile
+          load: true
+          tags: reknit-animation-renderer:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test - start, health check, render a storyboard
+        run: |
+          docker run -d --name renderer -p 3100:3100 reknit-animation-renderer:ci
+          # The service bundles the composition before it listens, which takes a little while.
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:3100/health; then break; fi
+            sleep 2
+          done
+          curl -fsS http://localhost:3100/health
+          cat > storyboard.json <<'JSON'
+          {"storyboard": {"type": "animation", "version": 2, "videoArtifactId": "", "scenes": [
+            {"id": "s1", "order": 1, "title": "Hello", "narration": "A first scene.", "durationSeconds": 2,
+             "transitionToNext": "fade", "layout": "steps", "assetArtifactIds": [], "visualElements": [
+              {"id": "a", "kind": "box", "text": "One", "enterAtSeconds": 0, "animation": "pop", "color": "teal"},
+              {"id": "b", "kind": "box", "text": "Two", "enterAtSeconds": 0.5, "animation": "pop", "color": "coral"},
+              {"id": "ab", "kind": "arrow", "text": "then", "fromId": "a", "toId": "b", "enterAtSeconds": 0.3, "animation": "draw", "color": "ink"}]},
+            {"id": "s2", "order": 2, "title": "Bye", "narration": "A second scene.", "durationSeconds": 2,
+             "transitionToNext": "none", "layout": "focus", "assetArtifactIds": [], "visualElements": [
+              {"id": "c", "kind": "circle", "text": "Done", "enterAtSeconds": 0, "animation": "highlight", "color": "yellow"}]}
+          ]}, "assetUrls": {}}
+          JSON
+          curl -fsS -X POST -H "Content-Type: application/json" --data @storyboard.json -o out.mp4 --max-time 300 http://localhost:3100/render
+          test "$(head -c 8 out.mp4 | tail -c 4)" = "ftyp" || { echo "Response is not an MP4"; exit 1; }
+          echo "Rendered $(stat -c %s out.mp4) bytes"
+
+      - name: Show service logs
+        if: always()
+        run: docker logs renderer || true
+
+      - name: Sign in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Work out image tags
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/reknit-animation-renderer
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
+
+      - name: Push
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: animation-renderer/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha

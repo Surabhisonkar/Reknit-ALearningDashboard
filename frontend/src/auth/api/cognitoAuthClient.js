@@ -10,8 +10,10 @@ const RETURN_TO_KEY = "auth_return_to";
  * sessionStorage (survives the redirect round-trip, cleared when the tab
  * closes - never localStorage), then sends the browser to the Hosted UI.
  * {@code returnTo} is the in-app path to come back to after login.
+ * {@code signUp} opens the Hosted UI's sign-up form instead of sign-in;
+ * it takes the same parameters and ends in the same code redirect.
  */
-export async function redirectToLogin(returnTo = "/") {
+export async function redirectToLogin(returnTo = "/", { signUp = false } = {}) {
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = await deriveCodeChallenge(codeVerifier);
   const state = generateState();
@@ -20,7 +22,7 @@ export async function redirectToLogin(returnTo = "/") {
   sessionStorage.setItem(STATE_KEY, state);
   sessionStorage.setItem(RETURN_TO_KEY, returnTo);
 
-  const url = new URL(`https://${config.cognito.domain}/oauth2/authorize`);
+  const url = new URL(`https://${config.cognito.domain}/${signUp ? "signup" : "oauth2/authorize"}`);
   url.searchParams.set("client_id", config.cognito.clientId);
   url.searchParams.set("response_type", "code");
   url.searchParams.set("scope", "openid email profile");

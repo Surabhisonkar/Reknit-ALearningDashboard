@@ -68,7 +68,8 @@ public class JobConceptDraftSource implements ConceptDraftSource {
             throw new DraftNotSaveableException(Reason.EXPIRED, "This draft has expired. Please generate it again.");
         }
 
-        ConceptDraft draft = codec.readDraft(result, job.getId(), JobJson.optionalUuid(input, "sourceExplainJobId"));
+        ConceptDraft draft = codec.readDraft(result, job.getId(), JobJson.optionalUuid(input, "sourceExplainJobId"))
+                .withSourceText(input.path("conceptText").asText(null));
         return new DraftClaim(draft, Optional.empty());
     }
 

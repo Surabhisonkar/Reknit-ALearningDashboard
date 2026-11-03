@@ -59,10 +59,12 @@ app:
     anthropic-api-key: ${ANTHROPIC_API_KEY:}
     gemini-api-key: ${GEMINI_API_KEY:}
     openai-api-key: ${OPENAI_API_KEY:}
+    # Alibaba Cloud Model Studio key, for Qwen-Image illustrations.
+    dashscope-api-key: ${DASHSCOPE_API_KEY:}
     # Ordered fallback chains per capability - first provider is tried first,
     # remaining ones are only used if it fails after its own retries.
     text-provider-order: ${TEXT_PROVIDER_ORDER:claude,gemini}
-    visual-provider-order: ${VISUAL_PROVIDER_ORDER:gemini}
+    visual-provider-order: ${VISUAL_PROVIDER_ORDER:qwen,gemini}
     embedding-provider-order: ${EMBEDDING_PROVIDER_ORDER:gemini}
     claude-model: ${CLAUDE_MODEL:claude-sonnet-4-6}
     
@@ -70,6 +72,9 @@ app:
     gemini-visual-model: ${GEMINI_VISUAL_MODEL:gemini-3.1-flash-image}
     gemini-embedding-model: ${GEMINI_EMBEDDING_MODEL:gemini-embedding-001}  # text-embedding-004 was shut down 2026-01-14
     openai-text-model: ${OPENAI_TEXT_MODEL:gpt-4.1}
+    qwen-image-model: ${QWEN_IMAGE_MODEL:qwen-image}
+    qwen-image-size: ${QWEN_IMAGE_SIZE:1328*1328}
+    dashscope-base-url: ${DASHSCOPE_BASE_URL:https://dashscope-intl.aliyuncs.com/api/v1}
     request-timeout-ms: ${AI_REQUEST_TIMEOUT_MS:60000}
     max-retries: ${AI_MAX_RETRIES:2}
 
@@ -109,6 +114,11 @@ app:
     s3:
       artifacts-bucket: ${ARTIFACTS_BUCKET:}
       presign-ttl-minutes: ${PRESIGN_TTL_MINUTES:60}
+
+  animation:
+    # Remotion render service (animation-renderer/). Blank = no MP4; the app plays the storyboard live.
+    renderer-url: ${ANIMATION_RENDERER_URL:}
+    render-timeout-ms: ${ANIMATION_RENDER_TIMEOUT_MS:300000}
 
   worker:
     # Only the worker profile actually starts the SQS polling loop.

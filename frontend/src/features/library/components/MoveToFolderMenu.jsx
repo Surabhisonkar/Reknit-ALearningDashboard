@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { Button, Modal } from "../../../shared/ui";
-import { folderColorClass } from "../../../shared/constants/folderColors.js";
+import { folderColorClass, folderColorStyle } from "../../../shared/constants/folderColors.js";
 import { cx } from "../../../shared/utils/classNames.js";
 import { AUTO_COLOR, toApiColor } from "../../../shared/constants/folderColors.js";
 import FolderColorPicker from "./FolderColorPicker.jsx";
@@ -20,7 +20,7 @@ export default function MoveToFolderMenu({ concept, folders, onMove, onCreateAnd
   const [busy, setBusy] = useState(false);
 
   const options = [
-    ...folders.map((f) => ({ id: f.id, name: f.name, colorClass: folderColorClass(f.color) })),
+    ...folders.map((f) => ({ id: f.id, name: f.name, colorClass: folderColorClass(f.color), colorStyle: folderColorStyle(f.color) })),
     { id: null, name: "Unfiled", colorClass: "folder-color-none" },
   ];
   const currentId = concept.folderId ?? null;
@@ -54,6 +54,7 @@ export default function MoveToFolderMenu({ concept, folders, onMove, onCreateAnd
               <button
                 type="button"
                 className={cx("folder-pick", option.colorClass, current && "is-current")}
+                style={option.colorStyle}
                 disabled={current || busy}
                 autoFocus={!creating && option.id === firstChoiceId}
                 onClick={() => onMove(option.id)}

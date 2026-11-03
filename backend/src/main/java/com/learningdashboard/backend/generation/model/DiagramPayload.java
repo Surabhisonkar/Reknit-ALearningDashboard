@@ -3,14 +3,23 @@ package com.learningdashboard.backend.generation.model;
 import java.util.List;
 
 /**
- * For structured processes/architectures/flowcharts — distinct from
+ * Version 2 (what new generations produce) is Mermaid source: the model
+ * writes {@code source} in {@code syntax} "mermaid", the frontend renders
+ * it to SVG, so labels and arrows stay real text the user can read and
+ * edit. Version 1 rows (still in the database) carry the older
+ * positioned {@code elements}/{@code connections} instead.
+ *
+ * <p>For structured processes/architectures/flowcharts — distinct from
  * {@link MindMapPayload} (organic branching ideas) and from {@link
  * ImagePayload} (a single picture with no internal structure).
  */
 public record DiagramPayload(
         int version,
         List<Element> elements,
-        List<Connection> connections
+        List<Connection> connections,
+        String syntax,
+        String source,
+        String caption
 ) implements VisualizationPayload {
 
     @Override

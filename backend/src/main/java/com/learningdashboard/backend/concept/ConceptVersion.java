@@ -50,6 +50,10 @@ public class ConceptVersion {
     @Column(name = "visualization_payload", columnDefinition = "json", nullable = false)
     private String visualizationPayload;
 
+    /** The text the visual was generated from (V5); null for versions made before it was kept. */
+    @Column(name = "source_text", columnDefinition = "mediumtext")
+    private String sourceText;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -58,7 +62,13 @@ public class ConceptVersion {
 
     public ConceptVersion(UUID conceptId, int version, String title, String summary,
                            String visualizationType, String visualizationPayload) {
+        this(conceptId, version, title, summary, visualizationType, visualizationPayload, null);
+    }
+
+    public ConceptVersion(UUID conceptId, int version, String title, String summary,
+                           String visualizationType, String visualizationPayload, String sourceText) {
         this.id = UUID.randomUUID();
+        this.sourceText = sourceText;
         this.conceptId = conceptId;
         this.version = version;
         this.title = title;
@@ -78,6 +88,7 @@ public class ConceptVersion {
     public String getTitle() { return title; }
     public String getSummary() { return summary; }
     public String getVisualizationType() { return visualizationType; }
+    public String getSourceText() { return sourceText; }
     public String getVisualizationPayload() { return visualizationPayload; }
     public Instant getCreatedAt() { return createdAt; }
 }

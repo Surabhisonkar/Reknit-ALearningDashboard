@@ -1,0 +1,21 @@
+{
+  "name": "reknit-animation-renderer",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Renders Reknit animation storyboards to MP4 with Remotion. Called by the backend worker.",
+  "scripts": {
+    "start": "node server.mjs",
+    "studio": "remotion studio src/index.js"
+  },
+  "dependencies": {
+    "@reknit/storyboard": "file:../packages/storyboard",
+    "@remotion/bundler": "4.0.540",
+    "@remotion/cli": "4.0.540",
+    "@remotion/renderer": "4.0.540",
+    "express": "^5.1.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "remotion": "4.0.540"
+  }
+}

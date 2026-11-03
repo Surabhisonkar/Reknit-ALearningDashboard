@@ -13,6 +13,9 @@ import { useAuth } from "../../../auth";
  * previous draft stays on screen until the new one arrives). `discard()`
  * just drops local state - the abandoned draft's generated assets expire
  * on the server by themselves.
+ *
+ * The visualization type is always the user's choice from the Visualize
+ * dropdown - never "auto" - and a regenerate keeps the type it was made with.
  */
 export function useVisualizeFlow() {
   const { accessToken } = useAuth();
@@ -25,7 +28,7 @@ export function useVisualizeFlow() {
       run(async () => {
         const job = await submitVisualizeJob(accessToken, {
           conceptText: input.conceptText,
-          preferredVisualizationType: "auto",
+          preferredVisualizationType: input.preferredType,
           sourceExplainJobId: input.sourceExplainJobId ?? null,
         });
         const completed = await pollJob(accessToken, job.id);
@@ -37,8 +40,8 @@ export function useVisualizeFlow() {
   );
 
   const visualize = useCallback(
-    (conceptText, { sourceExplainJobId } = {}) => {
-      lastInput.current = { conceptText, sourceExplainJobId };
+    (conceptText, { sourceExplainJobId, preferredType } = {}) => {
+      lastInput.current = { conceptText, sourceExplainJobId, preferredType };
       return submit(lastInput.current);
     },
     [submit]

@@ -1,0 +1,6 @@
+# Used by `docker build -f animation-renderer/Dockerfile .` (Docker reads <Dockerfile>.dockerignore).
+# The context is the repository root, so leave out everything the image does not copy.
+**
+!animation-renderer/
+!packages/storyboard/
+**/node_modules

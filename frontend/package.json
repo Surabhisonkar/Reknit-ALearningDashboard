@@ -12,10 +12,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@reknit/storyboard": "file:../packages/storyboard",
+    "@remotion/player": "4.0.540",
     "@tailwindcss/vite": "^4.3.3",
+    "@xyflow/react": "^12.12.1",
+    "elkjs": "^0.10.2",
+    "mermaid": "^11.17.2",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.1",
+    "remotion": "4.0.540",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {

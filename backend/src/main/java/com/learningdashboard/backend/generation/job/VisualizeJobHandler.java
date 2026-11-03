@@ -55,7 +55,7 @@ public class VisualizeJobHandler implements JobHandler {
         }
 
         VersionAppended appended = regenerationService.appendVersion(conceptId, job.getUserId(),
-                codec.toConceptDraft(result.draft(), job.getId(), sourceExplainJobId));
+                codec.toConceptDraft(result.draft(), job.getId(), sourceExplainJobId).withSourceText(conceptText));
         return new JobResult(result.rawModelResponse(), codec.toVersionResultJson(appended), appended.conceptId());
     }
 }

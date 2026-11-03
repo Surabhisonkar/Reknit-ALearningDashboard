@@ -6,6 +6,7 @@ import com.learningdashboard.backend.concept.ConceptDraft;
 import com.learningdashboard.backend.concept.VersionAppended;
 import com.learningdashboard.backend.generation.model.ImagePayload;
 import com.learningdashboard.backend.generation.model.VisualizationDraft;
+import com.learningdashboard.backend.generation.model.VisualizationPayload;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ class VisualizationDraftCodecTest {
     private final UUID artifactId = UUID.randomUUID();
     private final VisualizationDraft draft = new VisualizationDraft(
             "Photosynthesis", "Plants turn light into sugar.", "Biology",
-            new ImagePayload(1, "a leaf in sunlight", artifactId.toString(), "A green leaf"),
+            new ImagePayload(1, "a leaf in sunlight", artifactId.toString(), "A green leaf", List.of()),
             List.of(artifactId));
 
     @Test
@@ -67,6 +68,24 @@ class VisualizationDraftCodecTest {
                 .isEqualTo(objectMapper.readTree(viaJson.visualizationPayloadJson()));
         assertThat(direct.title()).isEqualTo(viaJson.title());
         assertThat(direct.artifactIds()).isEqualTo(viaJson.artifactIds());
+    }
+
+    @Test
+    void storyboardLayoutAndIconsSurviveTheTypedPayload() throws Exception {
+        JsonNode generated = objectMapper.readTree("""
+                { "type": "animation", "version": 2, "videoArtifactId": "", "scenes": [
+                  { "id": "s1", "order": 1, "title": "T", "narration": "N", "durationSeconds": 5,
+                    "transitionToNext": "fade", "layout": "cycle", "needsVisualAsset": false, "visualPrompt": "",
+                    "assetArtifactIds": [], "visualElements": [
+                      { "id": "a", "kind": "box", "text": "Sun", "icon": "☀️", "enterAtSeconds": 0,
+                        "animation": "highlight", "color": "yellow", "fromId": "", "toId": "" } ] } ] }
+                """);
+
+        VisualizationPayload typed = objectMapper.convertValue(generated, VisualizationPayload.class);
+        JsonNode stored = objectMapper.readTree(objectMapper.writeValueAsString(typed));
+
+        assertThat(stored.path("scenes").path(0).path("layout").asText()).isEqualTo("cycle");
+        assertThat(stored.path("scenes").path(0).path("visualElements").path(0).path("icon").asText()).isEqualTo("☀️");
     }
 
     @Test

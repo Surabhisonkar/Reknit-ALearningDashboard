@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { getConcept, deleteConcept } from "../../../api/conceptsApi.js";
+import { getConcept, deleteConcept, saveVisualizationEdit } from "../../../api/conceptsApi.js";
 import { mapConcept } from "../../../domain/conceptMapper.js";
 import { useAuth } from "../../../auth";
 
@@ -38,5 +38,11 @@ export function useConcept(conceptId) {
 
   const reload = useCallback(() => setReloadToken((t) => t + 1), []);
 
-  return { concept, status, errorMessage, remove, reload };
+  /** Saves an edited visualization as a new version, then shows it. Throws with the server's message on failure. */
+  async function saveVisualization(payload) {
+    const json = await saveVisualizationEdit(accessToken, conceptId, payload);
+    setConcept(mapConcept(json));
+  }
+
+  return { concept, status, errorMessage, remove, reload, saveVisualization };
 }

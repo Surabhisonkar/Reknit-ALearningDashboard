@@ -7,23 +7,58 @@
  * API JSON - only what these functions hand them.
  */
 
+// The subpath keeps Remotion out of the main bundle: the mapper runs on every page, the player only when an animation shows.
+import { mapAnimation } from "@reknit/storyboard/mapAnimation";
+
+/**
+ * Always hands the renderer a tree: every node has a parentId except the
+ * root. Version 2 payloads say so directly; for version 1 the root's own
+ * edges become its branches, any node left unattached hangs off the root
+ * (adding a root node first if the payload never had one), and the
+ * remaining edges stay as cross-links.
+ */
 function mapMindMap(json) {
-  const nodesById = new Map((json.nodes ?? []).map((n) => [n.id, n]));
+  const rawNodes = json.nodes ?? [];
+  const nodesById = new Map(rawNodes.map((n) => [n.id, n]));
+  const edges = (json.edges ?? []).filter((e) => nodesById.has(e.sourceId) && nodesById.has(e.targetId));
+  let rootNodeId = json.layoutHints?.rootNodeId;
+  let nodes = rawNodes.map((n) => ({ id: n.id, label: n.label, detail: n.detail ?? "", parentId: n.parentId || null }));
+
+  if (!nodesById.has(rootNodeId)) {
+    rootNodeId = "__root";
+    nodes = [{ id: rootNodeId, label: json.rootLabel, detail: "", parentId: null }, ...nodes];
+  }
+
+  const isTree = (json.version ?? 1) >= 2;
+  const treeEdges = new Set();
+  if (!isTree) {
+    const parentOf = new Map();
+    for (const e of edges) {
+      if (e.sourceId === rootNodeId && !parentOf.has(e.targetId)) {
+        parentOf.set(e.targetId, rootNodeId);
+        treeEdges.add(e);
+      }
+    }
+    nodes = nodes.map((n) => (n.id === rootNodeId ? { ...n, parentId: null } : { ...n, parentId: parentOf.get(n.id) ?? rootNodeId }));
+  }
+
   return {
     type: "mind_map",
     version: json.version,
     rootLabel: json.rootLabel,
-    nodes: (json.nodes ?? []).map((n) => ({ id: n.id, label: n.label, detail: n.detail ?? "" })),
-    edges: (json.edges ?? [])
-      .filter((e) => nodesById.has(e.sourceId) && nodesById.has(e.targetId))
+    nodes,
+    crossLinks: edges
+      .filter((e) => !treeEdges.has(e))
       .map((e) => ({ sourceId: e.sourceId, targetId: e.targetId, label: e.relationshipLabel ?? "" })),
-    orientation: json.layoutHints?.orientation ?? "radial",
-    rootNodeId: json.layoutHints?.rootNodeId ?? json.nodes?.[0]?.id ?? null,
+    rootNodeId,
     citations: (json.citations ?? []).map((c) => ({ nodeId: c.nodeId, sourceText: c.sourceText })),
   };
 }
 
 function mapDiagram(json) {
+  if (json.syntax === "mermaid") {
+    return { type: "diagram", version: json.version, syntax: "mermaid", source: json.source ?? "", caption: json.caption ?? "" };
+  }
   return {
     type: "diagram",
     version: json.version,
@@ -47,24 +82,6 @@ function mapDiagram(json) {
   };
 }
 
-function mapAnimation(json) {
-  const scenes = [...(json.scenes ?? [])].sort((a, b) => a.order - b.order);
-  return {
-    type: "animation",
-    version: json.version,
-    scenes: scenes.map((s) => ({
-      id: s.id,
-      order: s.order,
-      title: s.title,
-      narration: s.narration,
-      durationSeconds: s.durationSeconds ?? 5,
-      transition: s.transitionToNext ?? "none",
-      assetArtifactIds: s.assetArtifactIds ?? [],
-    })),
-    totalDurationSeconds: scenes.reduce((sum, s) => sum + (s.durationSeconds ?? 5), 0),
-  };
-}
-
 function mapImage(json) {
   return {
     type: "image",
@@ -72,6 +89,13 @@ function mapImage(json) {
     imagePrompt: json.imagePrompt,
     artifactId: json.artifactId || null,
     altText: json.altText ?? "",
+    labels: (json.labels ?? []).map((l) => ({
+      id: l.id,
+      text: l.text,
+      explanation: l.explanation ?? "",
+      x: Math.min(1, Math.max(0, l.x ?? 0.5)),
+      y: Math.min(1, Math.max(0, l.y ?? 0.5)),
+    })),
   };
 }
 

@@ -34,6 +34,7 @@ function DemoAuthProvider({ children }) {
   const navigate = useNavigate();
 
   const login = useCallback(() => setSession(createDemoSession()), []);
+  const signUp = login;
   const logout = useCallback(() => {
     setSession(null);
     // Leave any RequireAuth page first, or it would sign straight back in.
@@ -41,8 +42,8 @@ function DemoAuthProvider({ children }) {
   }, [navigate]);
 
   const value = useMemo(
-    () => ({ isAuthenticated: Boolean(session), isLoading: false, session, login, logout, _applySession: () => session }),
-    [session, login, logout]
+    () => ({ isAuthenticated: Boolean(session), isLoading: false, session, login, signUp, logout, _applySession: () => session }),
+    [session, login, signUp, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -64,6 +65,7 @@ function CognitoAuthProvider({ children }) {
   }, []);
 
   const login = useCallback((returnTo) => redirectToLogin(returnTo), []);
+  const signUp = useCallback((returnTo) => redirectToLogin(returnTo, { signUp: true }), []);
 
   const logout = useCallback(() => {
     // Capture before clearing - revocation needs the token that's about
@@ -117,11 +119,12 @@ function CognitoAuthProvider({ children }) {
       isLoading,
       session: authenticated ? session : null,
       login,
+      signUp,
       logout,
       // Used only by the /auth/callback route.
       _applySession: applySession,
     };
-  }, [session, isLoading, login, logout, applySession]);
+  }, [session, isLoading, login, signUp, logout, applySession]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

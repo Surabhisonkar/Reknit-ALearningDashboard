@@ -5,6 +5,7 @@ import com.learningdashboard.backend.concept.ConceptService;
 import com.learningdashboard.backend.concept.DuplicateTitlePolicy;
 import com.learningdashboard.backend.concept.SaveConceptCommand;
 import com.learningdashboard.backend.concept.SaveOutcome;
+import com.learningdashboard.backend.generation.edit.VisualizationEditService;
 import com.learningdashboard.backend.rag.EmbeddingIndexService;
 import com.learningdashboard.backend.security.CurrentUserService;
 import com.learningdashboard.backend.web.ConceptResponseAssembler;
@@ -14,6 +15,7 @@ import com.learningdashboard.backend.web.dto.ConceptResponse;
 import com.learningdashboard.backend.web.dto.ConceptSaveRequest;
 import com.learningdashboard.backend.web.dto.ConceptVersionResponse;
 import com.learningdashboard.backend.web.dto.ConceptVersionSummaryResponse;
+import com.learningdashboard.backend.web.dto.VisualizationEditRequest;
 import jakarta.validation.Valid;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -38,17 +41,20 @@ public class ConceptController {
     private final ConceptService conceptService;
     private final ConceptSaveService conceptSaveService;
     private final EmbeddingIndexService embeddingIndexService;
+    private final VisualizationEditService visualizationEditService;
     private final CurrentUserService currentUserService;
     private final ResponseMapper responseMapper;
     private final ConceptResponseAssembler assembler;
 
     public ConceptController(ConceptService conceptService, ConceptSaveService conceptSaveService,
                               EmbeddingIndexService embeddingIndexService,
+                              VisualizationEditService visualizationEditService,
                               CurrentUserService currentUserService, ResponseMapper responseMapper,
                               ConceptResponseAssembler assembler) {
         this.conceptService = conceptService;
         this.conceptSaveService = conceptSaveService;
         this.embeddingIndexService = embeddingIndexService;
+        this.visualizationEditService = visualizationEditService;
         this.currentUserService = currentUserService;
         this.responseMapper = responseMapper;
         this.assembler = assembler;
@@ -134,6 +140,17 @@ public class ConceptController {
     public ConceptResponse rename(@PathVariable UUID id, @Valid @RequestBody ConceptRenameRequest request) {
         var user = currentUserService.requireCurrentUser();
         return assembler.toResponse(conceptService.renameOwnedConcept(id, user.getId(), request.getTitle()));
+    }
+
+    /**
+     * Saves the user's own edit of the visual (today: a mind map) as the
+     * concept's next version. No model is called; the payload must pass the
+     * same validation a generated one does. Older versions stay reachable.
+     */
+    @PutMapping("/{id}/visualization")
+    public ConceptResponse saveVisualizationEdit(@PathVariable UUID id, @Valid @RequestBody VisualizationEditRequest request) {
+        var user = currentUserService.requireCurrentUser();
+        return assembler.toResponse(visualizationEditService.saveEdit(id, user.getId(), request.getVisualization()));
     }
 
     @DeleteMapping("/{id}")

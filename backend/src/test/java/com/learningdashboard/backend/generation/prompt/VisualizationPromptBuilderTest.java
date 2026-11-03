@@ -51,8 +51,25 @@ class VisualizationPromptBuilderTest {
     }
 
     @Test
+    void systemPromptForAChosenTypeCarriesOnlyThatSchema() {
+        String systemPrompt = new VisualizationPromptBuilder().withPreferredType("diagram").buildSystemPrompt();
+        assertThat(systemPrompt)
+                .contains("MUST be \"diagram\"")
+                .contains("Mermaid")
+                .doesNotContain("\"type\": \"mind_map\"")
+                .doesNotContain("\"type\": \"animation\"");
+    }
+
+    @Test
+    void animationPromptDescribesEveryLayout() {
+        String systemPrompt = new VisualizationPromptBuilder().withPreferredType("animation").buildSystemPrompt();
+        assertThat(systemPrompt).contains("\"steps\"", "\"cycle\"", "\"compare\"", "\"before_after\"", "\"focus\"",
+                "\"icon\"", "\"highlight\"");
+    }
+
+    @Test
     void systemPromptDoesNotHardcodeASceneCount() {
-        String systemPrompt = new VisualizationPromptBuilder().buildSystemPrompt();
+        String systemPrompt = new VisualizationPromptBuilder().withPreferredType("animation").buildSystemPrompt();
         assertThat(systemPrompt).containsIgnoringCase("decide the number of scenes");
     }
 }

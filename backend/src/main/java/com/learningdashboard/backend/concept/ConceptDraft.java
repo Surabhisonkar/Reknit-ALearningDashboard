@@ -16,6 +16,7 @@ import java.util.UUID;
  * @param visualizationPayloadJson normalized payload JSON, exactly as it will be stored
  * @param payloadSchemaVersion   the payload's own schema version ({@code visualization_version})
  * @param artifactIds            generated assets referenced by the payload, still orphaned
+ * @param sourceText             the text the visual was generated from, kept on the version; may be null
  */
 public record ConceptDraft(
         UUID generationJobId,
@@ -26,16 +27,31 @@ public record ConceptDraft(
         String visualizationType,
         String visualizationPayloadJson,
         int payloadSchemaVersion,
-        List<UUID> artifactIds
+        List<UUID> artifactIds,
+        String sourceText
 ) {
     public ConceptDraft {
         artifactIds = artifactIds == null ? List.of() : List.copyOf(artifactIds);
         suggestedFolder = suggestedFolder == null ? "" : suggestedFolder;
     }
 
+    /** A draft whose source text isn't known yet (see {@link #withSourceText}). */
+    public ConceptDraft(UUID generationJobId, UUID sourceExplainJobId, String title, String summary,
+                        String suggestedFolder, String visualizationType, String visualizationPayloadJson,
+                        int payloadSchemaVersion, List<UUID> artifactIds) {
+        this(generationJobId, sourceExplainJobId, title, summary, suggestedFolder, visualizationType,
+                visualizationPayloadJson, payloadSchemaVersion, artifactIds, null);
+    }
+
     /** Same draft with the title replaced - used when the user resolves a duplicate by renaming. */
     public ConceptDraft withTitle(String newTitle) {
         return new ConceptDraft(generationJobId, sourceExplainJobId, newTitle, summary, suggestedFolder,
-                visualizationType, visualizationPayloadJson, payloadSchemaVersion, artifactIds);
+                visualizationType, visualizationPayloadJson, payloadSchemaVersion, artifactIds, sourceText);
+    }
+
+    /** Same draft carrying the text it was generated from. */
+    public ConceptDraft withSourceText(String text) {
+        return new ConceptDraft(generationJobId, sourceExplainJobId, title, summary, suggestedFolder,
+                visualizationType, visualizationPayloadJson, payloadSchemaVersion, artifactIds, text);
     }
 }

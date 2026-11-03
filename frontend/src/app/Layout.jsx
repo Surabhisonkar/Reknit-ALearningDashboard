@@ -18,13 +18,11 @@ const footerLinks = [
   { to: "/support", label: "Contact Support" },
 ];
 
-function HamburgerMenu() {
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef(null);
-
+/** Closes a popover on an outside click or Escape. */
+function useDismiss(ref, setOpen) {
   useEffect(() => {
     function handleClickOutside(event) {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+      if (ref.current && !ref.current.contains(event.target)) {
         setOpen(false);
       }
     }
@@ -37,7 +35,14 @@ function HamburgerMenu() {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleEscape);
     };
-  }, []);
+  }, [ref, setOpen]);
+}
+
+function HamburgerMenu() {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
+  const { isAuthenticated, login, logout } = useAuth();
+  useDismiss(menuRef, setOpen);
 
   return (
     <div className="relative" ref={menuRef}>
@@ -58,27 +63,91 @@ function HamburgerMenu() {
               {link.label}
             </NavLink>
           ))}
+          <hr className="nav-popover-rule" />
+          <button
+            type="button"
+            className="nav-popover-action"
+            onClick={() => {
+              setOpen(false);
+              if (isAuthenticated) logout();
+              else login("/library");
+            }}
+          >
+            {isAuthenticated ? "Sign out" : "Sign in"}
+          </button>
         </nav>
       )}
     </div>
   );
 }
 
+/**
+ * Signed out: a "Log in" / "Get started" pill. Signed in: the user's name,
+ * which opens a small menu with Sign out. The demo build is always signed in
+ * as the demo user, so there the pill says so and Get started opens /create.
+ */
 function AccountControl() {
-  const { isAuthenticated, user, login, logout } = useAuth();
+  const { isAuthenticated, user, login, signUp, logout } = useAuth();
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useDismiss(ref, setOpen);
 
-  if (!isAuthenticated) {
+  if (config.demoMode && isAuthenticated) {
     return (
-      <button type="button" className="account-control" onClick={() => login("/library")}>
-        Sign in
-      </button>
+      <div className="auth-pill">
+        <span className="auth-pill-label">Demo</span>
+        <Link className="auth-pill-primary" to="/create">
+          Get started
+        </Link>
+      </div>
     );
   }
 
+  if (!isAuthenticated) {
+    return (
+      <div className="auth-pill">
+        <button type="button" className="auth-pill-secondary" onClick={() => login("/library")}>
+          Log in
+        </button>
+        <button type="button" className="auth-pill-primary" onClick={() => signUp("/create")}>
+          Get started
+        </button>
+      </div>
+    );
+  }
+
+  const name = user?.name || user?.email || "Account";
   return (
-    <button type="button" className="account-control" onClick={logout} title={user?.email}>
-      {user?.name || user?.email || "Account"} · Sign out
-    </button>
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        className="account-control"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title={user?.email}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span className="account-avatar" aria-hidden="true">
+          {name.charAt(0).toUpperCase()}
+        </span>
+        <span className="account-name">{name}</span>
+      </button>
+      {open && (
+        <div className="nav-popover" role="menu">
+          <button
+            type="button"
+            role="menuitem"
+            className="nav-popover-action"
+            onClick={() => {
+              setOpen(false);
+              logout();
+            }}
+          >
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 

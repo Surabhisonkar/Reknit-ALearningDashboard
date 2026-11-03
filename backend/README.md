@@ -324,9 +324,12 @@ SPRING_PROFILES_ACTIVE=worker mvn spring-boot:run       # worker service (port 8
 | `CORS_ALLOWED_ORIGINS` | Comma-separated frontend origin(s), never `*` |
 | `DB_URL` / `DB_USERNAME` / `DB_PASSWORD` | Postgres connection |
 | `REDIS_HOST` / `REDIS_PORT` | Distributed rate limiter backing store |
-| `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` / `OPENAI_API_KEY` | Provider keys |
+| `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` / `OPENAI_API_KEY` / `DASHSCOPE_API_KEY` | Provider keys (`DASHSCOPE_API_KEY` = Qwen-Image via Alibaba Cloud Model Studio) |
 | `TEXT_PROVIDER_ORDER` | default `claude,gemini` (add `,openai` to include it) |
-| `VISUAL_PROVIDER_ORDER` / `EMBEDDING_PROVIDER_ORDER` | default `gemini` |
+| `VISUAL_PROVIDER_ORDER` | default `qwen,gemini` (a provider without a key drops out of the chain) |
+| `QWEN_IMAGE_MODEL` / `QWEN_IMAGE_SIZE` / `DASHSCOPE_BASE_URL` | default `qwen-image` / `1328*1328` / the international endpoint |
+| `EMBEDDING_PROVIDER_ORDER` | default `gemini` |
+| `ANIMATION_RENDERER_URL` / `ANIMATION_RENDER_TIMEOUT_MS` | Remotion render service for animation MP4s; blank = no MP4 / default `300000` |
 | `AI_REQUEST_TIMEOUT_MS` / `AI_MAX_RETRIES` | default `20000` / `2` |
 | `AWS_REGION` | default `us-east-1` |
 | `GENERATION_QUEUE_URL` / `GENERATION_DLQ_URL` | SQS queue URLs |

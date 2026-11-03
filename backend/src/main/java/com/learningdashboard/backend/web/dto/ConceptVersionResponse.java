@@ -10,6 +10,7 @@ public record ConceptVersionResponse(
         String summary,
         String visualizationType,
         JsonNode visualization,
-        Instant createdAt
+        Instant createdAt,
+        String sourceText
 ) {
 }
