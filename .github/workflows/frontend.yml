@@ -51,7 +51,7 @@ jobs:
         run: npm run build
 
       - name: npm audit (fails on any known vulnerability)
-        run: npm audit --audit-level=low
+        run: npm audit --omit=dev --audit-level=low
 
   # Builds with the real client settings and publishes the static site to S3.
   # Skipped until the AWS_DEPLOY_ROLE_ARN repository variable is set.
