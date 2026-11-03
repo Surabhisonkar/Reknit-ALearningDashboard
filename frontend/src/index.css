@@ -677,3 +677,8 @@ a { color: inherit; text-decoration: none; }
 .source-notes-body { background: var(--white); border: 1px solid var(--line); border-radius: 14px; display: grid; gap: 8px; margin-top: 8px; padding: 16px 18px; }
 .source-notes-hint { color: var(--muted); font-size: 13px; }
 .source-notes-text { color: var(--ink); font-size: 15px; line-height: 1.65; max-height: 420px; overflow-y: auto; white-space: pre-wrap; }
+
+/* App-wide fallback when a page fails to render. */
+.page-error { display: grid; gap: 12px; justify-items: start; padding-bottom: 80px; padding-top: 80px; }
+.page-error h1 { font-size: clamp(26px, 3.4vw, 36px); }
+.page-error p { color: var(--muted); }

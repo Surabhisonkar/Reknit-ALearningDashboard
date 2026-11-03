@@ -7,11 +7,13 @@ import { createSeedState } from "./seed.js";
  * in-memory copy that simply starts fresh each load.
  */
 // Bumped whenever the seed library changes, so returning visitors get the new one.
-const STORAGE_KEY = "reknit-demo-db-v2";
+const STORAGE_KEY = "reknit-demo-db-v3";
 
 function load() {
   try {
-    localStorage.removeItem("reknit-demo-db-v1"); // the previous seed library
+    // Earlier seed libraries.
+    localStorage.removeItem("reknit-demo-db-v1");
+    localStorage.removeItem("reknit-demo-db-v2");
   } catch {
     // storage blocked - nothing to clean up
   }

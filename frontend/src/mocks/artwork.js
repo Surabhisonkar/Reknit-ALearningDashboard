@@ -1,6 +1,3 @@
-import gray389Url from "./assets/gray389.png";
-import gray409Url from "./assets/gray409.png";
-
 /**
  * Stand-in for the images the worker would generate and upload to S3. Each
  * artifact is drawn as an SVG in the browser and served from an object URL,
@@ -67,12 +64,8 @@ export function renderArtworkSvg({ title, hue = 160, motif = "abstract" }) {
 
 const objectUrls = new Map();
 
-// Real image files for seed concepts, referenced from artifacts by key.
-const ASSETS = { gray409: gray409Url, gray389: gray389Url };
-
 /** One object URL per artifact for the life of the page - the "presigned URL" of demo mode. */
 export function artifactObjectUrl(id, artifact) {
-  if (artifact.asset && ASSETS[artifact.asset]) return ASSETS[artifact.asset];
   if (!objectUrls.has(id)) {
     const blob = new Blob([renderArtworkSvg(artifact)], { type: "image/svg+xml" });
     objectUrls.set(id, URL.createObjectURL(blob));

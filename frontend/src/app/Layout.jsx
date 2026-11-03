@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 
 import { Icon } from "../shared/ui/Icon";
 import { useAuth } from "../auth";
 import { config } from "../config/env.js";
+import { ErrorBoundary } from "../shared/ErrorBoundary.jsx";
 
 const menuLinks = [
   { to: "/library", label: "Library" },
@@ -173,6 +174,7 @@ function DemoBanner() {
 }
 
 function Layout() {
+  const location = useLocation();
   return (
     <div className="app-shell">
       <a href="#main" className="skip-link">
@@ -195,7 +197,22 @@ function Layout() {
       </header>
 
       <main id="main">
-        <Outlet />
+        {/* Last safety net: a page that throws shows a message with the header still usable. Keyed by
+            path so navigating away clears it. */}
+        <ErrorBoundary
+          key={location.pathname}
+          fallback={
+            <div className="page-width page-error" role="alert">
+              <h1>Something went wrong on this page.</h1>
+              <p>Reloading usually fixes it.</p>
+              <button type="button" className="button" onClick={() => window.location.reload()}>
+                Reload
+              </button>
+            </div>
+          }
+        >
+          <Outlet />
+        </ErrorBoundary>
       </main>
 
       <footer className="site-footer">

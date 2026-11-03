@@ -1,5 +1,6 @@
 import { Suspense, lazy } from "react";
 
+import { ErrorBoundary } from "../../../shared/ErrorBoundary.jsx";
 import { ArtifactUrlsContext } from "./artifactUrls.js";
 import DiagramRenderer from "./DiagramRenderer.jsx";
 import ImageRenderer from "./ImageRenderer.jsx";
@@ -23,10 +24,14 @@ function VisualizationRenderer({ visualization, assetUrls, onSave }) {
   if (!Renderer) {
     return <p className="visualization-error">This visualization type isn't supported yet.</p>;
   }
+  // The boundary also catches a lazily loaded renderer that fails to download, so one
+  // broken visual shows a message instead of blanking whatever page it sits on.
   const rendered = (
-    <Suspense fallback={<div className="visualization-loading" aria-hidden="true" />}>
-      <Renderer visualization={visualization} onSave={onSave} />
-    </Suspense>
+    <ErrorBoundary fallback={<p className="error-boundary-fallback">Couldn't display this visualization. Try reloading the page.</p>}>
+      <Suspense fallback={<div className="visualization-loading" aria-hidden="true" />}>
+        <Renderer visualization={visualization} onSave={onSave} />
+      </Suspense>
+    </ErrorBoundary>
   );
   return assetUrls ? <ArtifactUrlsContext.Provider value={assetUrls}>{rendered}</ArtifactUrlsContext.Provider> : rendered;
 }
