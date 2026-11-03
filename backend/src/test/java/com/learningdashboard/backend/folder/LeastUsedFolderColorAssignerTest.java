@@ -29,7 +29,14 @@ class LeastUsedFolderColorAssignerTest {
 
     @Test
     void onceEveryColourIsUsedItStartsTheSecondRoundAtTheLeastUsed() {
-        when(repository.findColorsByUserId(userId)).thenReturn(List.of(FolderColor.values()));
+        when(repository.findColorsByUserId(userId)).thenReturn(FolderColor.values());
         assertThat(assigner.nextColor(userId)).isEqualTo(FolderColor.CORAL);
+    }
+
+    @Test
+    void customColoursDoNotCountAgainstThePalette() {
+        when(repository.findColorsByUserId(userId))
+                .thenReturn(List.of(FolderColor.fromJson("#123456"), FolderColor.CORAL));
+        assertThat(assigner.nextColor(userId)).isEqualTo(FolderColor.YELLOW);
     }
 }

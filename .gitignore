@@ -49,3 +49,6 @@ docs/open-questions
 
 ld-before-*.sql
 *.patch
+
+# Personal photo for the About page - kept out of the repository.
+frontend/src/assets/about/surabhi.jpg

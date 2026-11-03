@@ -1,0 +1,20 @@
+{
+  "name": "@reknit/storyboard",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "The Remotion storyboard composition shared by the frontend Player and the animation-renderer service.",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./mapAnimation": "./src/mapAnimation.js"
+  },
+  "sideEffects": false,
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "react": "^19.2.7",
+    "remotion": "4.0.540"
+  }
+}

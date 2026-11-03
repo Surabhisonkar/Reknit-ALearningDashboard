@@ -10,7 +10,12 @@ I built Reknit because my own notes kept turning into a place where ideas went t
 
 **Capture.** Type a topic, or paste your own notes. Reknit can write an explanation first if you want one, then generates a visualization. The result comes back as a draft: you can save it, regenerate it or throw it away, and nothing is stored until you save.
 
-**Four kinds of visual.** Mind maps, diagrams, scene-by-scene animations with narration, and generated images. For animations the model decides how many scenes a topic needs and how they are paced.
+**Four kinds of visual, your choice.** The Visualize button has a dropdown on its right where you pick the form:
+
+- **Structured diagram.** The model writes Mermaid code and the app draws it as SVG, so every label and arrow is real text. You can open the source and edit it.
+- **Illustration.** The model writes a detailed image prompt, Qwen-Image draws the picture with no text in it, and the app adds the labels and explanations on top as SVG.
+- **Mind map.** The model picks the main concept and its subtopics and returns them as a tree. React Flow draws it and ELK.js lays it out; you can expand, collapse, rename, add, delete and drag branches around, then save your edit as a new version of the concept.
+- **Animation.** The model writes a 4-8 scene storyboard: on-screen elements, timing and transitions for each scene. A scene can name a layout (steps, cycle, compare, before/after, focus) instead of placing every element by hand. Remotion renders it to an MP4 stored in S3, and the same composition plays live in the app when there is no MP4.
 
 **Library.** Saved concepts live in colour-coded folders with search. Regenerating a concept adds a new version instead of overwriting the old one, so you can flip back through earlier attempts.
 
@@ -168,8 +173,9 @@ The variables you are most likely to touch. The full set, with defaults, is in [
 | `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | MySQL connection |
 | `REDIS_HOST`, `REDIS_PORT` | Rate limiter storage |
 | `GENERATION_QUEUE_URL`, `GENERATION_DLQ_URL` | SQS job queue and its dead-letter queue |
-| `ARTIFACTS_BUCKET` | S3 bucket for generated images |
-| `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` | Provider keys. Only the providers named in the order variables need one. |
+| `ARTIFACTS_BUCKET` | S3 bucket for generated images and animation MP4s |
+| `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `DASHSCOPE_API_KEY` | Provider keys. Only the providers named in the order variables need one. `DASHSCOPE_API_KEY` is for Qwen-Image. |
+| `ANIMATION_RENDERER_URL` | Optional. The Remotion render service in [`animation-renderer/`](animation-renderer/README.md). Without it animations play live in the browser instead of as an MP4. |
 | `TEXT_PROVIDER_ORDER`, `VISUAL_PROVIDER_ORDER`, `EMBEDDING_PROVIDER_ORDER` | Fallback order for each capability |
 | `CORS_ALLOWED_ORIGINS` | Allowed frontend origins, comma separated |
 | `RELATED_TOP_K`, `RELATED_MAX_DISTANCE` | How many related concepts to show, and how close they must be |
@@ -187,6 +193,7 @@ Every route needs a Cognito access token as a bearer token.
 | `GET` | `/api/concepts`, `/api/concepts/{id}` | List and read concepts |
 | `PATCH`, `DELETE` | `/api/concepts/{id}` | Update or delete a concept |
 | `GET` | `/api/concepts/{id}/versions` | Version history |
+| `PUT` | `/api/concepts/{id}/visualization` | Save your own edit of a mind map as the next version (no AI call) |
 | `GET` | `/api/concepts/{id}/related` | Nearest saved concepts |
 | `GET` | `/api/concepts/spark-feed` | Concepts for a Spark session |
 | `POST` | `/api/concepts/{id}/ask` | Ask a question about a concept |
@@ -221,6 +228,8 @@ frontend/                     React app
     auth/                     Cognito PKCE flow and session handling
     shared/                   UI primitives, hooks, narration
   scripts/                    end-to-end verification scripts
+animation-renderer/           Node service that renders animation storyboards to MP4 with Remotion
+packages/storyboard/          Remotion composition shared by frontend/ and animation-renderer/
 ```
 
 ## Tests

@@ -19,7 +19,13 @@ public record MindMapPayload(
     @Override
     public String type() { return "mind_map"; }
 
-    public record Node(String id, String label, String detail) { }
+    /**
+     * {@code parentId} (version 2) makes the map a tree the frontend can
+     * expand and collapse: null only on the root. {@code edges} are then
+     * extra cross-links on top of that tree. Version 1 rows have no
+     * parentId; the frontend derives the tree from the root's edges.
+     */
+    public record Node(String id, String label, String detail, String parentId) { }
 
     public record Edge(String sourceId, String targetId, String relationshipLabel) { }
 

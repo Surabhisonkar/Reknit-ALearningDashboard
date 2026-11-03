@@ -17,9 +17,10 @@ public class AiProperties {
     private String anthropicApiKey;
     private String geminiApiKey;
     private String openaiApiKey;
+    private String dashscopeApiKey;
 
     private List<String> textProviderOrder = List.of("claude", "gemini");
-    private List<String> visualProviderOrder = List.of("gemini");
+    private List<String> visualProviderOrder = List.of("qwen", "gemini");
     private List<String> embeddingProviderOrder = List.of("gemini");
 
     private String claudeModel = "claude-sonnet-4-6";
@@ -33,6 +34,10 @@ public class AiProperties {
     private String geminiVisualModel = "gemini-2.5-flash-image";
     private String geminiEmbeddingModel = "gemini-embedding-001"; // text-embedding-004 was shut down 2026-01-14
     private String openaiTextModel = "gpt-4.1";
+    private String qwenImageModel = "qwen-image";
+    private String qwenImageSize = "1328*1328";
+    // International (Singapore) endpoint; mainland-China accounts use https://dashscope.aliyuncs.com/api/v1.
+    private String dashscopeBaseUrl = "https://dashscope-intl.aliyuncs.com/api/v1";
 
     private long requestTimeoutMs = 20_000L;
     private int maxRetries = 2;
@@ -43,6 +48,8 @@ public class AiProperties {
     public void setGeminiApiKey(String v) { this.geminiApiKey = v; }
     public String getOpenaiApiKey() { return openaiApiKey; }
     public void setOpenaiApiKey(String v) { this.openaiApiKey = v; }
+    public String getDashscopeApiKey() { return dashscopeApiKey; }
+    public void setDashscopeApiKey(String v) { this.dashscopeApiKey = v; }
 
     public List<String> getTextProviderOrder() { return textProviderOrder; }
     public void setTextProviderOrder(List<String> v) { this.textProviderOrder = v; }
@@ -61,6 +68,12 @@ public class AiProperties {
     public void setGeminiEmbeddingModel(String v) { this.geminiEmbeddingModel = v; }
     public String getOpenaiTextModel() { return openaiTextModel; }
     public void setOpenaiTextModel(String v) { this.openaiTextModel = v; }
+    public String getQwenImageModel() { return qwenImageModel; }
+    public void setQwenImageModel(String v) { this.qwenImageModel = v; }
+    public String getQwenImageSize() { return qwenImageSize; }
+    public void setQwenImageSize(String v) { this.qwenImageSize = v; }
+    public String getDashscopeBaseUrl() { return dashscopeBaseUrl; }
+    public void setDashscopeBaseUrl(String v) { this.dashscopeBaseUrl = v; }
 
     public long getRequestTimeoutMs() { return requestTimeoutMs; }
     public void setRequestTimeoutMs(long v) { this.requestTimeoutMs = v; }

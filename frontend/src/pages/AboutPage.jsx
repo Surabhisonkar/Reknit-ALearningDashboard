@@ -1,22 +1,52 @@
-// import { Button } from "../shared/ui/Buttons";
 import { Pill } from "../shared/ui/Pill";
 
-// TODO(Surabhi): swap the role/bio line and the Reknit placeholders
-// once you've settled on a product name - everything else on this page
-// (tech stack, architecture highlights) reflects what's actually built.
+// The photo is kept out of git (see .gitignore), so it's picked up only when
+// the file exists; without it the hero shows initials and the build still works.
+const photos = import.meta.glob("../assets/about/surabhi.jpg", { eager: true, import: "default" });
+const photo = Object.values(photos)[0] ?? null;
+
+// Matches what the code actually uses - check backend/pom.xml and
+// frontend/package.json before changing a version here.
 const techStack = [
-  "React 19 + Vite",
-  "Spring Boot 3.5.9 / Java 21",
-  "MySQL 8 + Flyway",
-  "AWS Cognito, SQS, S3",
-  "Redis (Bucket4j rate limiting)",
-  "Claude + Gemini + OpenAI (adapter pattern)",
+  { name: "React 19, Vite 8, Tailwind CSS 4", detail: "The app itself: pages, the Create flow and every visual renderer." },
+  { name: "Spring Boot 4.1 on Java 21", detail: "One codebase run as two processes: the API and a background worker." },
+  { name: "MySQL 8 with Flyway", detail: "Concepts, version history, folders and notes, with versioned schema migrations." },
+  { name: "AWS Cognito, SQS and S3", detail: "Sign-in, the queue for AI work, and storage for generated images and videos." },
+  { name: "Redis with Bucket4j", detail: "Per-user rate limits that hold across every server." },
+  { name: "Gemini, Claude, OpenAI, Qwen-Image", detail: "Gemini by default, Claude and OpenAI as optional fallbacks, Qwen-Image for illustrations." },
+  { name: "Mermaid, React Flow and ELK.js", detail: "Diagrams drawn as real SVG, and mind maps laid out automatically that you can rearrange." },
+  { name: "Remotion", detail: "Animation storyboards rendered to MP4 by a small Node service, or played live in the browser." },
 ];
 
-// TODO(Surabhi): this is a placeholder - swap in your real projects.
-// Learning Dashboard's entry below is accurate to what's actually built;
-// the other two are structural placeholders so the grid has real shape
-// to work with rather than being empty.
+const architecture = [
+  {
+    title: "AI work never blocks a request",
+    text: "The API queues each generation on SQS and returns straight away; a separate worker calls the model while the browser checks back.",
+  },
+  {
+    title: "Swappable providers with fallback",
+    text: "Each task has an ordered list of providers, wrapped in retries and circuit breakers. A provider without a key simply drops out.",
+  },
+  {
+    title: "AI output is checked before it's kept",
+    text: "Every answer is validated against its schema (a real tree, safe Mermaid code, a sensible storyboard) and content-safety rules.",
+  },
+  {
+    title: "Versions, not overwrites",
+    text: "Regenerating a concept or saving your own edit adds a version; earlier ones stay one click away.",
+  },
+  {
+    title: "Related concepts from your own library",
+    text: "Embeddings live in MySQL and are ranked by cosine similarity, so new ideas link back to what you already saved.",
+  },
+  {
+    title: "One animation, two outputs",
+    text: "The same Remotion scene code plays in the browser and renders the MP4, so the video always matches the preview.",
+  },
+];
+
+// Projects section is commented out below; uncomment both to show it again.
+/*
 const projects = [
   {
     title: "Reknit- Learning Dashboard",
@@ -30,74 +60,62 @@ const projects = [
     tags: ["Python", "Streamlit", "NumPy", "Plotly", "Machine Learning"],
     tone: "teal",
   },
-  // {
-  //   title: "[Project Name]",
-  //   tagline: "[One or two sentences on what it does and the problem it solves.]",
-  //   tags: ["[Tag]", "[Tag]"],
-  //   tone: "yellow",
-  // },
+];
+*/
+
+// Only what Reknit's own codebase demonstrates.
+const skillGroups = [
+  { label: "Frontend", tone: "coral", skills: ["React", "Vite", "Tailwind CSS", "React Flow", "Mermaid", "Remotion", "Cognito PKCE auth"] },
+  { label: "Backend", tone: "teal", skills: ["Java", "Spring Boot", "REST APIs", "Async workers", "Resilience4j"] },
+  { label: "Data & Cloud", tone: "yellow", skills: ["MySQL", "Flyway", "Redis", "AWS (Cognito, SQS, S3)", "Docker", "GitHub Actions"] },
+  { label: "AI", tone: "coral", skills: ["LLM provider integration", "Structured output validation", "RAG", "Prompt engineering"] },
 ];
 
-// TODO(Surabhi): add/remove skills freely - this only lists what's
-// demonstrably used in Learning Dashboard's own codebase, not your full
-// range.
-const skillGroups = [
-  { label: "Frontend", tone: "coral", skills: ["React", "Vite", "Tailwind CSS", "Cognito PKCE auth"] },
-  { label: "Backend", tone: "teal", skills: ["Java", "Spring Boot", "REST APIs", "Resilience4j"] },
-  { label: "Data & Cloud", tone: "yellow", skills: ["MySQL", "Redis", "AWS (Cognito, SQS, S3)", "Flyway"] },
-  { label: "AI / ML", tone: "coral", skills: ["LLM provider integration", "RAG", "Prompt engineering"] },
-];
+const TONES = ["coral", "yellow", "teal"];
 
 function AboutPage() {
   return (
     <main className="about-page page-width">
-      <div className="about-hero" >
-        <Pill tone="coral">ABOUT THE BUILDER</Pill>
-        <h1>Surabhi Sonkar</h1>
-        <p className="role">Software Engineer / Builder of Reknit</p>
-        <p style={{ textAlign: "justify" }}>
-          <br /><b style={{fontSize:"19px"}}>I built Reknit because I wanted a better way to revisit what I've learned.</b>
-          <br />Ideas can get buried under pages of notes. I wanted something that would make coming back to an old idea feel less like going through notes 
-          and more like picking up a thought where I left it.
-        </p>
-        {/* Display buttons for CREATE and WORKSPACE */}
-        {/* <div className="about-actions">
-          <Button to="/create">Work with Reknit</Button>
-          <Button secondary to="/workspace">
-            Open workspace
-          </Button>
-        </div> */}
-      </div>
-
-      <section className="about-section">
-        <div className="section-heading">
-          <Pill tone="teal">WHY I BUILT Reknit</Pill>
-          <h2>Some ideas deserve more than a page of notes.</h2>
-          <p>
-            <b>Reknit is built around a simple idea: learning shouldn't stop when you close your notes. 
-            It should be easy to come back to what you've learned, see it from a different perspective, 
-            and build on what you already know.</b>
-          </p>
+      <section className="about-hero">
+        <div className="about-portrait">
+          {photo ? <img src={photo} alt="Surabhi Sonkar" /> : <span aria-hidden="true">SS</span>}
         </div>
-        <div className="principles">
-          <div>
-            <Pill tone="coral">01
-            &nbsp;&nbsp;&nbsp;
-            <h4> Make it visual</h4></Pill>
-            <p>Revisit topics with the context you need. 
-            Refresh your understanding, reconnect related concepts, and keep moving forward.</p>
-          </div>
-          <div>
-            <Pill tone="teal">02
-            &nbsp;&nbsp;&nbsp;
-            <h4>Make it easier to revisit</h4></Pill>
-            <p>Come back to what you've learned without starting from scratch. 
-                Pick up where you left off, refresh your understanding, and keep building on it.</p>
-          </div>
+        <div className="about-intro">
+          <Pill tone="coral">ABOUT THE BUILDER</Pill>
+          <h1>Surabhi Sonkar</h1>
+          <p className="role">Software Engineer, builder of Reknit</p>
+          <p className="about-lead">I built Reknit because I wanted a better way to revisit what I&apos;ve learned.</p>
+          <p>
+            Ideas get buried under pages of notes. I wanted coming back to an old idea to feel less like digging
+            through notes and more like picking up a thought where I left it.
+          </p>
         </div>
       </section>
 
       <section className="about-section">
+        <div className="section-heading">
+          <Pill tone="teal">WHY I BUILT REKNIT</Pill>
+          <h2>Some ideas deserve more than a page of notes.</h2>
+          <p>
+            Learning shouldn&apos;t stop when you close your notes. It should be easy to come back to what you&apos;ve
+            learned, see it from a different angle, and build on what you already know.
+          </p>
+        </div>
+        <div className="principles">
+          <div>
+            <Pill tone="coral">01</Pill>
+            <h3>Make it visual</h3>
+            <p>A diagram, an illustration, a mind map or a short animation: pick the form that makes the idea click.</p>
+          </div>
+          <div>
+            <Pill tone="teal">02</Pill>
+            <h3>Make it easy to revisit</h3>
+            <p>Come back without starting from scratch: pick up where you left off, refresh it, and keep building on it.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* <section className="about-section">
         <div className="section-heading">
           <Pill tone="coral">PROJECTS</Pill>
           <h2>A few things I've built.</h2>
@@ -117,7 +135,7 @@ function AboutPage() {
             </div>
           ))}
         </div>
-      </section>
+      </section> */}
 
       <section className="about-section">
         <div className="section-heading">
@@ -146,33 +164,28 @@ function AboutPage() {
           <h2>Small surface. Thoughtful machinery.</h2>
         </div>
         <div className="stack-grid">
-          {techStack.map((stack, index) => (
-            <div className="stack-card" key={stack}>
-              <Pill tone={index % 3 === 0 ? "coral" : index % 3 === 1 ? "yellow" : "teal"}>
-                {String(index + 1).padStart(2, "0")}
-              </Pill>
-              <strong>{stack}</strong>
-              <span>Designed to keep the concept layer fast and flexible.</span>
+          {techStack.map((item, index) => (
+            <div className="stack-card" key={item.name}>
+              <Pill tone={TONES[index % 3]}>{String(index + 1).padStart(2, "0")}</Pill>
+              <strong>{item.name}</strong>
+              <span>{item.detail}</span>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="architecture-band">
-        <Pill tone="coral">ARCHITECTURE HIGHLIGHTS</Pill>
+      <section className="about-section architecture-band">
+        <div className="section-heading">
+          <Pill tone="coral">ARCHITECTURE HIGHLIGHTS</Pill>
+          <h2>How it holds together.</h2>
+        </div>
         <div className="architecture-grid">
-          <div>
-            <h3>Adapter Pattern for AI Providers</h3>
-            <p>Text generation and image generation are swappable independently, per provider.</p>
-          </div>
-          <div>
-            <h3>Recall-Ready Concepts</h3>
-            <p>Notes become small, revisit-able experiences instead of dead files.</p>
-          </div>
-          <div>
-            <h3>Personalized RAG</h3>
-            <p>New concepts are grounded in what you've already learned, not generated in isolation.</p>
-          </div>
+          {architecture.map((item) => (
+            <div key={item.title}>
+              <h3>{item.title}</h3>
+              <p>{item.text}</p>
+            </div>
+          ))}
         </div>
       </section>
     </main>

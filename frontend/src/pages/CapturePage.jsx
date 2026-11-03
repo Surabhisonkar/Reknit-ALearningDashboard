@@ -5,11 +5,12 @@ import { useExplainFlow, ExplanationRenderer } from "../features/generate";
 import { useVisualizeFlow, useSaveDraft, DraftPreview, DuplicateTitleModal } from "../features/capture";
 import { VisualizationRenderer } from "../features/workspace";
 import { explanationToPlainText } from "../domain";
-import { Button } from "../shared/ui";
-import { Icon } from "../shared/ui/Icon";
+import { Button, SplitButton } from "../shared/ui";
 import { Pill } from "../shared/ui/Pill";
 import { ErrorBoundary } from "../shared/ErrorBoundary.jsx";
-import { visualizationTypeLabel } from "../shared/constants/visualizationTypes.js";
+import { VISUALIZE_OPTIONS, visualizationTypeLabel } from "../shared/constants/visualizationTypes.js";
+
+const VISUALIZE_MENU = VISUALIZE_OPTIONS.map((o) => ({ value: o.type, label: o.label, hint: o.hint }));
 
 /**
  * Capture: topic/notes -> (optional) inline explanation -> inline
@@ -28,6 +29,8 @@ function CapturePage() {
   const explainFlow = useExplainFlow();
   const visualizeFlow = useVisualizeFlow();
   const saveDraft = useSaveDraft();
+  const [visualType, setVisualType] = useState(VISUALIZE_OPTIONS[0].type);
+  const visualLabel = VISUALIZE_OPTIONS.find((o) => o.type === visualType).label;
 
   // Set only when Save hits an existing title - holds what the modal shows.
   const [duplicateTitle, setDuplicateTitle] = useState(null);
@@ -49,7 +52,7 @@ function CapturePage() {
 
     saveDraft.clearError();
     try {
-      await visualizeFlow.visualize(conceptText, { sourceExplainJobId: explainFlow.jobId });
+      await visualizeFlow.visualize(conceptText, { sourceExplainJobId: explainFlow.jobId, preferredType: visualType });
     } catch {
       // visualizeFlow.error already carries the message - nothing else to do here.
     }
@@ -120,7 +123,7 @@ function CapturePage() {
               onClick={() => explainFlow.explain(title, description)}
               disabled={explainFlow.status === "loading" || !hasTopic}
             >
-              {explainFlow.status === "loading" ? "Thinking..." : "Explain this"} <Icon>{"->"}</Icon>
+              {explainFlow.status === "loading" ? "Thinking..." : "Explain this"}
             </Button>
           </div>
         </div>
@@ -168,10 +171,16 @@ function CapturePage() {
 
       {canVisualize && (
         <div className="generate-actions">
-          <Button onClick={handleVisualize} disabled={visualizing || saveDraft.saving}>
-            {visualizing && !draft ? "Visualizing..." : draft ? "Visualize again from these notes" : "Visualize this"}{" "}
-            <Icon>{"->"}</Icon>
-          </Button>
+          <SplitButton
+            onClick={handleVisualize}
+            disabled={visualizing || saveDraft.saving}
+            options={VISUALIZE_MENU}
+            value={visualType}
+            onChange={setVisualType}
+            menuLabel="Choose how to visualize"
+          >
+            {visualizing ? "Visualizing..." : draft ? `Visualize again as ${visualLabel.toLowerCase()}` : `Visualize as ${visualLabel.toLowerCase()}`}
+          </SplitButton>
         </div>
       )}
 

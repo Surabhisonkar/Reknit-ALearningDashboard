@@ -10,4 +10,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  resolve: {
+    // @reknit/storyboard (../packages/storyboard) is linked, not installed, so
+    // its react and remotion imports must resolve to this app's copies.
+    dedupe: ['react', 'react-dom', 'remotion'],
+  },
 })

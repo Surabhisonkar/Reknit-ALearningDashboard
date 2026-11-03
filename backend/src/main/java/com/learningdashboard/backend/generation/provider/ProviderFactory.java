@@ -6,6 +6,7 @@ import com.learningdashboard.backend.generation.provider.gemini.GeminiEmbeddingP
 import com.learningdashboard.backend.generation.provider.gemini.GeminiTextProvider;
 import com.learningdashboard.backend.generation.provider.gemini.GeminiVisualProvider;
 import com.learningdashboard.backend.generation.provider.openai.OpenAiTextProvider;
+import com.learningdashboard.backend.generation.provider.qwen.QwenImageProvider;
 import com.learningdashboard.backend.generation.provider.resilience.ResilientProviderExecutor;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -66,6 +67,12 @@ public class ProviderFactory {
 
     @Bean
     @Lazy
+    public QwenImageProvider qwenImageProvider(AiProperties props, ResilientProviderExecutor executor, ObjectMapper mapper) {
+        return new QwenImageProvider(props, executor, mapper);
+    }
+
+    @Bean
+    @Lazy
     public GeminiEmbeddingProvider geminiEmbeddingProvider(AiProperties props, ResilientProviderExecutor executor, ObjectMapper mapper) {
         return new GeminiEmbeddingProvider(props, executor, mapper);
     }
@@ -89,9 +96,10 @@ public class ProviderFactory {
     @Bean
     @Primary
     public VisualGenerationProvider visualGenerationProvider(
-            AiProperties props, ProviderFallbackExecutor fallbackExecutor, @Lazy GeminiVisualProvider geminiVisual) {
+            AiProperties props, ProviderFallbackExecutor fallbackExecutor,
+            @Lazy QwenImageProvider qwenImage, @Lazy GeminiVisualProvider geminiVisual) {
 
-        Map<String, VisualGenerationProvider> byName = Map.of("gemini", geminiVisual);
+        Map<String, VisualGenerationProvider> byName = Map.of("qwen", qwenImage, "gemini", geminiVisual);
         return new FallbackVisualGenerationProvider(resolveOrder("visual generation", props.getVisualProviderOrder(), byName), fallbackExecutor);
     }
 
@@ -138,7 +146,7 @@ public class ProviderFactory {
         } else if (resolved.size() == 1) {
             log.warn("Only one {} provider is usable ({} of {} configured could be constructed) - there is no "
                     + "real fallback redundancy right now. Set another provider's API key "
-                    + "(ANTHROPIC_API_KEY / GEMINI_API_KEY / OPENAI_API_KEY as applicable) to restore it.",
+                    + "(ANTHROPIC_API_KEY / GEMINI_API_KEY / OPENAI_API_KEY / DASHSCOPE_API_KEY as applicable) to restore it.",
                     capabilityName, resolved.size(), configuredOrder.size());
         }
 

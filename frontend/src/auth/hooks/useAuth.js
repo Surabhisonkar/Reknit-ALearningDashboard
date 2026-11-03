@@ -17,6 +17,7 @@ export function useAuth() {
       accessToken: session?.accessToken ?? null,
       user: claims ? { email: claims.email, name: claims.name } : null,
       login: ctx.login,
+      signUp: ctx.signUp,
       logout: ctx.logout,
       _applySession: ctx._applySession,
     };

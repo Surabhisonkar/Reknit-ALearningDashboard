@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <!-- Hand-drawn stand-in for a Qwen-Image illustration of the water cycle. Like a generated
+       image it carries no words: the app's SVG label overlay adds them. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#cfeef7"/>
+      <stop offset="1" stop-color="#fff6ea"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5cc3d6"/>
+      <stop offset="1" stop-color="#2b8fb3"/>
+    </linearGradient>
+    <linearGradient id="hill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fcf8a"/>
+      <stop offset="1" stop-color="#5aa865"/>
+    </linearGradient>
+    <linearGradient id="mountain" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9c8f9f"/>
+      <stop offset="1" stop-color="#6f6577"/>
+    </linearGradient>
+    <radialGradient id="sunGlow">
+      <stop offset="0" stop-color="#ffe9a3"/>
+      <stop offset="1" stop-color="#ffe9a3" stop-opacity="0"/>
+    </radialGradient>
+    <marker id="up" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#ffffff"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#sky)"/>
+
+  <!-- Sun -->
+  <circle cx="155" cy="120" r="140" fill="url(#sunGlow)"/>
+  <g stroke="#f8b84e" stroke-width="10" stroke-linecap="round">
+    <line x1="155" y1="20" x2="155" y2="45"/><line x1="155" y1="195" x2="155" y2="220"/>
+    <line x1="55" y1="120" x2="80" y2="120"/><line x1="230" y1="120" x2="255" y2="120"/>
+    <line x1="84" y1="49" x2="102" y2="67"/><line x1="208" y1="173" x2="226" y2="191"/>
+    <line x1="84" y1="191" x2="102" y2="173"/><line x1="208" y1="67" x2="226" y2="49"/>
+  </g>
+  <circle cx="155" cy="120" r="58" fill="#f8c554"/>
+
+  <!-- Mountain with snow -->
+  <path d="M640 640 L870 250 L1110 640 Z" fill="url(#mountain)"/>
+  <path d="M870 250 L815 345 L845 330 L870 352 L898 328 L930 350 Z" fill="#ffffff"/>
+  <path d="M960 640 L1080 410 L1200 600 L1200 640 Z" fill="#83788a"/>
+
+  <!-- Hills and land -->
+  <path d="M470 800 L470 650 C560 600 640 640 720 610 C820 575 930 615 1010 590 C1090 568 1150 590 1200 580 L1200 800 Z" fill="url(#hill)"/>
+
+  <!-- Trees -->
+  <g>
+    <rect x="1018" y="560" width="10" height="34" fill="#7a5a44"/>
+    <circle cx="1023" cy="550" r="26" fill="#3f9a5a"/>
+    <rect x="1078" y="566" width="10" height="30" fill="#7a5a44"/>
+    <circle cx="1083" cy="556" r="22" fill="#4caf63"/>
+    <rect x="788" y="590" width="10" height="30" fill="#7a5a44"/>
+    <circle cx="793" cy="580" r="22" fill="#4caf63"/>
+  </g>
+
+  <!-- River running down to the sea -->
+  <path d="M905 612 C870 650 800 640 760 680 C720 720 640 700 560 742 C520 762 480 760 430 770" fill="none" stroke="#5cc3d6" stroke-width="22" stroke-linecap="round"/>
+  <path d="M905 612 C870 650 800 640 760 680 C720 720 640 700 560 742 C520 762 480 760 430 770" fill="none" stroke="#ffffff" stroke-opacity=".45" stroke-width="5" stroke-dasharray="18 26" stroke-linecap="round"/>
+
+  <!-- Sea -->
+  <path d="M0 610 C80 595 160 625 240 610 C320 595 400 625 480 612 L520 640 L520 800 L0 800 Z" fill="url(#sea)"/>
+  <g fill="none" stroke="#ffffff" stroke-opacity=".6" stroke-width="5" stroke-linecap="round">
+    <path d="M40 670 q20 -12 40 0 t40 0"/>
+    <path d="M220 700 q20 -12 40 0 t40 0"/>
+    <path d="M90 740 q20 -12 40 0 t40 0"/>
+    <path d="M330 660 q20 -12 40 0 t40 0"/>
+  </g>
+
+  <!-- Evaporation: vapour rising from the sea -->
+  <g fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" marker-end="url(#up)" opacity=".95">
+    <path d="M150 585 C135 545 165 515 150 475 C138 445 160 420 150 395"/>
+    <path d="M270 585 C255 545 285 515 270 475 C258 445 280 420 270 395"/>
+    <path d="M390 585 C375 545 405 515 390 475 C378 445 400 420 390 395"/>
+  </g>
+
+  <!-- Condensation: clouds forming -->
+  <g fill="#ffffff">
+    <ellipse cx="560" cy="170" rx="110" ry="52"/>
+    <circle cx="510" cy="140" r="52"/>
+    <circle cx="590" cy="118" r="66"/>
+    <circle cx="650" cy="160" r="46"/>
+  </g>
+  <!-- Rain cloud over the mountain -->
+  <g fill="#e3ecf2">
+    <ellipse cx="860" cy="205" rx="130" ry="56"/>
+    <circle cx="800" cy="175" r="56"/>
+    <circle cx="880" cy="148" r="72"/>
+    <circle cx="955" cy="190" r="50"/>
+  </g>
+  <g fill="#c9d6e0" opacity=".7">
+    <ellipse cx="870" cy="240" rx="120" ry="22"/>
+  </g>
+
+  <!-- Wind carrying the cloud inland -->
+  <g fill="none" stroke="#9fc9da" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 14">
+    <path d="M660 110 C700 90 730 95 760 112"/>
+  </g>
+
+  <!-- Precipitation: rain -->
+  <g stroke="#3d9fd0" stroke-width="6" stroke-linecap="round">
+    <line x1="770" y1="280" x2="758" y2="312"/>
+    <line x1="810" y1="300" x2="798" y2="332"/>
+    <line x1="850" y1="278" x2="838" y2="310"/>
+    <line x1="890" y1="302" x2="878" y2="334"/>
+    <line x1="930" y1="280" x2="918" y2="312"/>
+    <line x1="790" y1="350" x2="778" y2="382"/>
+    <line x1="830" y1="370" x2="818" y2="402"/>
+    <line x1="870" y1="352" x2="858" y2="384"/>
+    <line x1="910" y1="372" x2="898" y2="404"/>
+    <line x1="950" y1="350" x2="938" y2="382"/>
+  </g>
+</svg>

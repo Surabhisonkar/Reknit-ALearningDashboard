@@ -7,3 +7,4 @@ export { Tabs } from "./Tabs.jsx";
 export { Modal } from "./Modal.jsx";
 export { ProgressDots } from "./ProgressDots.jsx";
 export { OverflowMenu } from "./OverflowMenu.jsx";
+export { SplitButton } from "./SplitButton.jsx";

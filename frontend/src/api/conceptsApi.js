@@ -13,6 +13,11 @@ export function renameConcept(accessToken, id, title) {
   return apiRequest("PATCH", `/api/concepts/${id}`, { accessToken, body: { title } });
 }
 
+/** Saves the user's edit of the visual (a mind map) as the concept's next version. Returns the updated concept. */
+export function saveVisualizationEdit(accessToken, id, visualization) {
+  return apiRequest("PUT", `/api/concepts/${id}/visualization`, { accessToken, body: { visualization } });
+}
+
 export function deleteConcept(accessToken, id) {
   return apiRequest("DELETE", `/api/concepts/${id}`, { accessToken });
 }

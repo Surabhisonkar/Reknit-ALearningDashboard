@@ -66,7 +66,8 @@ public class ResponseMapper {
                 version.getSummary(),
                 version.getVisualizationType(),
                 parseOrNull(version.getVisualizationPayload()),
-                version.getCreatedAt());
+                version.getCreatedAt(),
+                version.getSourceText());
     }
 
     public FolderResponse toFolderResponse(FolderSummary summary) {

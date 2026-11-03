@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
+  ConceptSidebar,
   useConcept,
   useConceptVersions,
   useRegenerateConcept,
@@ -7,9 +9,10 @@ import {
   RelatedConceptsPanel,
   useConceptNotes,
   ConceptNotesPanel,
+  SourceNotesPanel,
   VisualizationRenderer,
 } from "../features/workspace";
-import { Button, OverflowMenu, ProgressDots } from "../shared/ui";
+import { Button, OverflowMenu, ProgressDots, SvgIcon } from "../shared/ui";
 import { Pill } from "../shared/ui/Pill";
 import { ErrorBoundary } from "../shared/ErrorBoundary.jsx";
 import { visualizationTypeLabel } from "../shared/constants/visualizationTypes.js";
@@ -26,7 +29,7 @@ import { visualizationTypeLabel } from "../shared/constants/visualizationTypes.j
  * when there are any.
  */
 function WorkspaceContent({ conceptId }) {
-  const { concept, status, errorMessage, remove, reload } = useConcept(conceptId);
+  const { concept, status, errorMessage, remove, reload, saveVisualization } = useConcept(conceptId);
   const currentVersion = concept?.currentVersion ?? 1;
   const history = useConceptVersions(conceptId, currentVersion);
   const regeneration = useRegenerateConcept(conceptId);
@@ -38,6 +41,11 @@ function WorkspaceContent({ conceptId }) {
   async function handleDelete() {
     await remove();
     navigate("/library");
+  }
+
+  async function handleSaveVisualization(payload) {
+    await saveVisualization(payload);
+    history.showCurrent(); // the saved edit is the new current version
   }
 
   async function handleRegenerate() {
@@ -112,7 +120,11 @@ function WorkspaceContent({ conceptId }) {
           key={history.selectedVersion}
           fallback={<p className="error-boundary-fallback">Couldn't display this visualization.</p>}
         >
-          <VisualizationRenderer visualization={shown.visualization} />
+          <VisualizationRenderer
+            visualization={shown.visualization}
+            // Only the current version can be edited and saved; an older one is view-only history.
+            onSave={history.historicalVersion ? undefined : handleSaveVisualization}
+          />
         </ErrorBoundary>
 
         {history.versions.length > 1 && (
@@ -135,14 +147,21 @@ function WorkspaceContent({ conceptId }) {
       <div className="page-width">
         <RelatedConceptsPanel related={related} />
         <ConceptNotesPanel notes={notes} onDelete={removeNote} />
+        <SourceNotesPanel conceptId={conceptId} version={history.selectedVersion ?? currentVersion} />
       </div>
     </main>
   );
 }
 
+/**
+ * The library sidebar sits outside the keyed content, so it keeps its open
+ * folders and search while you move between concepts. On narrow screens it
+ * slides in from the left behind a "Concepts" button.
+ */
 function WorkspacePage() {
   const [searchParams] = useSearchParams();
   const conceptId = searchParams.get("conceptId");
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   if (!conceptId) {
     return (
@@ -156,7 +175,32 @@ function WorkspacePage() {
     );
   }
 
-  return <WorkspaceContent key={conceptId} conceptId={conceptId} />;
+  return (
+    <div className={`workspace-layout ${drawerOpen ? "workspace-layout-drawer-open" : ""}`}>
+      <aside className="workspace-sidebar" id="workspace-sidebar">
+        <ConceptSidebar activeId={conceptId} onNavigate={() => setDrawerOpen(false)} />
+      </aside>
+      <button
+        type="button"
+        className="workspace-drawer-backdrop"
+        aria-label="Close concepts"
+        tabIndex={drawerOpen ? 0 : -1}
+        onClick={() => setDrawerOpen(false)}
+      />
+      <div className="workspace-main">
+        <button
+          type="button"
+          className="workspace-drawer-toggle page-width"
+          aria-controls="workspace-sidebar"
+          aria-expanded={drawerOpen}
+          onClick={() => setDrawerOpen(true)}
+        >
+          <SvgIcon name="folder" size={16} /> Concepts
+        </button>
+        <WorkspaceContent key={conceptId} conceptId={conceptId} />
+      </div>
+    </div>
+  );
 }
 
 export default WorkspacePage;

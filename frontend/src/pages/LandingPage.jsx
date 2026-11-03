@@ -1,23 +1,40 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
+import { ShowcaseSection } from "../features/showcase";
 import { Button } from "../shared/ui/Buttons";
 import { Icon } from "../shared/ui/Icon";
 import { Pill } from "../shared/ui/Pill";
 
-function FeatureCard({ tone, icon, title, text, link }) {
+/** A feature card links either to a page or to one of the showcase tabs on this page. */
+function FeatureCard({ tone, icon, title, text, link, to, onShow }) {
   return (
     <article className={`feature-card feature-${tone}`}>
       <div className="feature-icon">{icon}</div>
       <h3>{title}</h3>
       <p>{text}</p>
-      <Link to="/workspace">
-        {link} <span>{"->"}</span>
-      </Link>
+      {to ? (
+        <Link to={to}>{link}</Link>
+      ) : (
+        <a href="#showcase" onClick={onShow}>
+          {link}
+        </a>
+      )}
     </article>
   );
 }
 
 function LandingPage() {
+  const [showcaseType, setShowcaseType] = useState("diagram");
+
+  function showInShowcase(type) {
+    return (event) => {
+      event.preventDefault();
+      setShowcaseType(type);
+      document.getElementById("showcase")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+  }
+
   return (
     <main className="landing-page">
       <section className="landing-hero page-width">
@@ -26,8 +43,8 @@ function LandingPage() {
         </div>
         <h1>Turn your notes into visual concepts that actually stick.</h1>
         <p>
-          Reknit automatically converts raw text into clean diagrams, dynamic mind maps, and
-          micro-animations. Revisit ideas by looking, never re-reading.
+          Paste your notes and pick how to see them: a clean diagram, a labelled illustration, a
+          mind map or a short animation. Revisit ideas by looking, never re-reading.
         </p>
         <div className="hero-actions">
           <Button to="/create">
@@ -36,43 +53,6 @@ function LandingPage() {
           <Button to="/library" secondary>
             <Icon>o</Icon> Browse library
           </Button>
-        </div>
-      </section>
-
-      <section className="showcase page-width tactile-panel">
-        <div className="raw-note">
-          <div className="note-heading">
-            <Pill tone="yellow">RAW TEXT INPUT</Pill>
-            <span className="note-pin" />
-          </div>
-          <h3>How Dopamine Loops Work</h3>
-          <ol>
-            <li>Trigger creates anticipation</li>
-            <li>Cue prompts immediate action</li>
-            <li>Reward delivers release loop</li>
-          </ol>
-          <small>
-            Imported from Obsidian <span>18 words</span>
-          </small>
-        </div>
-        <div className="transform-arrow">
-          <strong>+</strong>
-          <span>AI VISUAL ENGINE</span>
-        </div>
-        <div className="mindmap-card">
-          <div className="mindmap-top">
-            <Pill tone="teal">AUTO-GENERATED</Pill>
-            <Pill tone="coral">3 nodes</Pill>
-          </div>
-          <div className="mindmap-lines">
-            <span className="node node-one">Dopamine Cycle</span>
-            <span className="node node-two">Trigger</span>
-            <span className="node node-three">Reward</span>
-            <span className="node node-four">Cue</span>
-          </div>
-          <small>
-            Visual map ready <span>12:04 AM</span>
-          </small>
         </div>
       </section>
 
@@ -90,15 +70,17 @@ function LandingPage() {
             tone="coral"
             icon="#"
             title="Visual Mind Maps"
-            text="Instant spatial diagrams organize your thoughts so connections become obvious."
-            link="Explore map structure"
+            text="Branches you can fold, rename, drag and rearrange, laid out for you automatically."
+            link="Explore the mind map"
+            onShow={showInShowcase("mind_map")}
           />
           <FeatureCard
             tone="teal"
             icon="o"
             title="Micro-Animations"
             text="Step-by-step concepts play at the pace your brain prefers."
-            link="See a sample animation"
+            link="Watch a sample animation"
+            onShow={showInShowcase("animation")}
           />
           <FeatureCard
             tone="yellow"
@@ -106,20 +88,12 @@ function LandingPage() {
             title="10-Second Recall"
             text="Revisit tough ideas with tiny prompts that make retrieval effortless."
             link="Try recall mode"
+            to="/spark"
           />
         </div>
       </section>
 
-      <section className="callout page-width">
-        <div>
-          <Pill tone="coral">IN DEVELOPMENT</Pill>
-          <h2>Stop forcing linear note-taking on a non-linear brain.</h2>
-          <p>Export directly to Arc, Notion, or wherever your ideas already live.</p>
-        </div>
-        <Button to="/workspace">
-          Start visualizing <Icon>{"->"}</Icon>
-        </Button>
-      </section>
+      <ShowcaseSection activeType={showcaseType} onSelect={setShowcaseType} />
     </main>
   );
 }

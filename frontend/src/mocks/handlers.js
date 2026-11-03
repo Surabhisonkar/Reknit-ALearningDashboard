@@ -154,6 +154,29 @@ function settle(job) {
 
 // ------------------------------------------------------------------ routes
 
+/** Why a mind map edit can't be saved, or null if it can - the checks VisualPayloadValidator runs on the server. */
+function mindMapEditProblem(viz, currentType) {
+  if (viz?.type !== "mind_map") return "Only mind maps can be edited and saved.";
+  if (currentType !== "mind_map") return "An edit can't change the visualization type.";
+  const nodes = viz.nodes ?? [];
+  if (nodes.length === 0 || nodes.length > 25) return "A mind map needs between 1 and 25 branches.";
+  if (nodes.some((n) => !n.label?.trim())) return "Every branch needs a label.";
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const rootId = viz.layoutHints?.rootNodeId;
+  if (!byId.has(rootId) || byId.get(rootId).parentId) return "The mind map has lost its main idea.";
+  for (const node of nodes) {
+    const seen = new Set();
+    let at = node;
+    while (at && at.id !== rootId) {
+      if (seen.has(at.id)) return "Branches can't loop back on themselves.";
+      seen.add(at.id);
+      at = byId.get(at.parentId);
+    }
+    if (!at) return "Every branch has to connect back to the main idea.";
+  }
+  return null;
+}
+
 export const handlers = [
   // ---- account (the demo user is always signed in)
   http.get(`${API}/account`, () =>
@@ -307,6 +330,20 @@ export const handlers = [
     persist();
     return new HttpResponse(null, { status: 204 });
   }),
+  // Mirrors the backend's VisualizationEditService: mind maps only, same tree rules, saved as the next version.
+  http.put(`${API}/concepts/:id/visualization`, async ({ params, request }) => {
+    await delay(250);
+    const concept = findConcept(params.id);
+    if (!concept) return notFound("Concept");
+    const { visualization } = await request.json();
+    const current = concept.versions.at(-1);
+    const problem = mindMapEditProblem(visualization, current.visualizationType);
+    if (problem) return HttpResponse.json({ error: problem, details: [] }, { status: 400 });
+    concept.versions.push({ ...current, version: current.version + 1, visualization, createdAt: now() });
+    concept.updatedAt = now();
+    persist();
+    return HttpResponse.json(toConceptResponse(concept));
+  }),
   http.put(`${API}/concepts/:id/folder`, async ({ params, request }) => {
     const concept = findConcept(params.id);
     if (!concept) return notFound("Concept");
@@ -325,7 +362,9 @@ export const handlers = [
     const v = findConcept(params.id)?.versions.find((x) => x.version === Number(params.version));
     if (!v) return notFound("Version");
     const { version, title, summary, visualizationType, visualization, createdAt } = v;
-    return HttpResponse.json({ version, title, summary, visualizationType, visualization, createdAt });
+    // The demo keeps one source text per concept: every version (regenerates, edits) is drawn from it.
+    const sourceText = findConcept(params.id).sourceText ?? null;
+    return HttpResponse.json({ version, title, summary, visualizationType, visualization, createdAt, sourceText });
   }),
   http.get(`${API}/concepts/:id/related`, async ({ params }) => {
     await delay(200);

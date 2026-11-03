@@ -33,7 +33,7 @@ class JobConceptDraftSourceTest {
 
     private String draftJson() {
         return codec.toDraftResultJson(new VisualizationDraft("T", "S", "",
-                new MindMapPayload(1, "T", List.of(new MindMapPayload.Node("root", "T", "S")), List.of(),
+                new MindMapPayload(1, "T", List.of(new MindMapPayload.Node("root", "T", "S", null)), List.of(),
                         new MindMapPayload.LayoutHints("radial", "root"), List.of()), List.of()));
     }
 
@@ -73,6 +73,7 @@ class JobConceptDraftSourceTest {
         assertThat(claim.draft().visualizationType()).isEqualTo("mind_map");
         assertThat(claim.draft().sourceExplainJobId()).isEqualTo(explainJobId);
         assertThat(claim.draft().generationJobId()).isEqualTo(job.getId());
+        assertThat(claim.draft().sourceText()).isEqualTo("x"); // the text it was generated from travels with it
     }
 
     @Test

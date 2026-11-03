@@ -1,16 +1,17 @@
 import { useState } from "react";
 
-import { folderColorClass } from "../../../shared/constants/folderColors.js";
+import { folderColorClass, folderColorStyle } from "../../../shared/constants/folderColors.js";
 import { useRowOverflow } from "../../../shared/hooks/useRowOverflow.js";
 import { cx } from "../../../shared/utils/classNames.js";
 import { ALL_FOLDERS, UNFILED } from "../../../domain/conceptSearch.js";
 
-function FolderTile({ tileKey, label, count, colorClass, active, hidden, onSelect }) {
+function FolderTile({ tileKey, label, count, colorClass, colorStyle, active, hidden, onSelect }) {
   return (
     <button
       type="button"
       data-overflow-key={tileKey}
       className={cx("folder-tile", colorClass, active && "is-active")}
+      style={colorStyle}
       aria-pressed={active}
       inert={hidden}
       onClick={onSelect}
@@ -33,7 +34,7 @@ export default function FolderStrip({ folders, totalCount, unfiledCount, activeF
 
   const tiles = [
     { key: ALL_FOLDERS, label: "All concepts", count: totalCount, colorClass: "folder-color-all" },
-    ...folders.map((f) => ({ key: f.id, label: f.name, count: f.conceptCount, colorClass: folderColorClass(f.color) })),
+    ...folders.map((f) => ({ key: f.id, label: f.name, count: f.conceptCount, colorClass: folderColorClass(f.color), colorStyle: folderColorStyle(f.color) })),
     ...(unfiledCount > 0 ? [{ key: UNFILED, label: "Unfiled", count: unfiledCount, colorClass: "folder-color-none" }] : []),
   ];
   const signature = tiles.map((t) => `${t.key}:${t.label}`).join("|");
@@ -50,6 +51,7 @@ export default function FolderStrip({ folders, totalCount, unfiledCount, activeF
             label={t.label}
             count={t.count}
             colorClass={t.colorClass}
+            colorStyle={t.colorStyle}
             active={activeFolder === t.key}
             hidden={!expanded && hiddenKeys.has(t.key)}
             onSelect={() => onSelect(t.key)}

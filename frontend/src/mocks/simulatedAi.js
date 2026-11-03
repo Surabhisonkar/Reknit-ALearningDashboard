@@ -103,54 +103,145 @@ function pickType(text, preferred) {
   return "mind_map";
 }
 
-function mindMap(title, items, variant) {
-  const nodes = [{ id: "root", label: title, detail: "" }, ...items.map((f, i) => ({ id: `n${i}`, label: f.label, detail: f.detail }))];
+/** Splits a facet's sentence into a few short sub-points, for the mind map's second level. */
+function subPoints(detail) {
+  return detail
+    .split(/,|;| and | so | because | which /i)
+    .map((part) => shortLabel(part.trim()))
+    .filter((label) => label.length > 2)
+    .slice(0, 2);
+}
+
+function mindMap(title, items) {
+  const nodes = [{ id: "root", label: title, detail: "", parentId: null }];
+  items.forEach((f, i) => {
+    nodes.push({ id: `n${i}`, label: f.label, detail: f.detail, parentId: "root" });
+    subPoints(f.detail)
+      .filter((label) => label.toLowerCase() !== f.label.toLowerCase())
+      .forEach((label, j) => nodes.push({ id: `n${i}-${j}`, label, detail: "", parentId: `n${i}` }));
+  });
   return {
     type: "mind_map",
-    version: 1,
+    version: 2,
     rootLabel: title,
     nodes,
-    edges: items.map((_, i) => ({ sourceId: "root", targetId: `n${i}`, relationshipLabel: "" })),
-    layoutHints: { orientation: variant % 2 ? "horizontal" : "radial", rootNodeId: "root" },
+    edges: items.length > 2 ? [{ sourceId: "n0", targetId: `n${items.length - 1}`, relationshipLabel: "relates to" }] : [],
+    layoutHints: { orientation: "horizontal", rootNodeId: "root" },
     citations: [],
   };
 }
 
-function diagram(items) {
+/** Mermaid labels can't contain a bare double quote. */
+const mermaidText = (text) => text.replace(/"/g, "'");
+
+function diagram(title, items) {
   const steps = items.slice(0, 6);
-  // Two columns, snaking down, so even six steps fit the 800x600 canvas.
-  const elements = steps.map((f, i) => ({
-    id: `e${i}`,
-    elementType: i === 0 || i === steps.length - 1 ? "terminator" : "process",
-    label: f.label,
-    x: i % 2 === 0 ? 60 : 480,
-    y: 40 + i * 90,
-    width: 260,
-    height: 60,
-    style: "",
-    accessibilityLabel: f.detail,
-  }));
+  const lines = ["flowchart TD", `  start(["${mermaidText(title)}"])`];
+  steps.forEach((f, i) => lines.push(`  s${i}["${mermaidText(f.label)}"]`));
+  lines.push("  start --> s0");
+  steps.slice(1).forEach((_, i) => lines.push(`  s${i} -->|"then"| s${i + 1}`));
   return {
     type: "diagram",
-    version: 1,
-    elements,
-    connections: elements.slice(1).map((el, i) => ({ id: `c${i}`, sourceId: elements[i].id, targetId: el.id, label: String(i + 1), style: "" })),
+    version: 2,
+    syntax: "mermaid",
+    source: lines.join("\n"),
+    caption: `${title}, step by step.`,
   };
 }
 
-function animation(title, items, newArtifact) {
-  const scenes = items.slice(0, 5).map((f, i) => ({
-    id: `s${i}`,
-    order: i + 1,
-    title: f.label,
-    narration: f.detail,
-    durationSeconds: Math.min(8, Math.max(4, Math.round(f.detail.split(/\s+/).length / 3))),
-    transitionToNext: i === items.length - 1 ? "none" : i % 2 ? "slide" : "fade",
-    needsVisualAsset: i === 0,
-    visualPrompt: "",
-    assetArtifactIds: i === 0 ? [newArtifact(title)] : [],
+const ELEMENT_COLORS = ["teal", "coral", "yellow"];
+const SCENE_EMOJI = ["💡", "🔍", "⚙️", "🧩", "✅", "📈", "🔁", "🎯"];
+
+const box = (id, text, icon, enterAtSeconds, color, animation = "pop") =>
+  ({ id, kind: "box", text, icon, enterAtSeconds, animation, color, fromId: "", toId: "" });
+const arrow = (id, fromId, toId, text, enterAtSeconds) =>
+  ({ id, kind: "arrow", text, enterAtSeconds, animation: "draw", color: "coral", fromId, toId });
+
+/**
+ * A storyboard the way the prompt asks for one: every scene names a layout
+ * (so nothing is positioned by hand), boxes carry icons, arrows have labels
+ * and each scene's key element uses "highlight". An intro shows the topic
+ * and its parts, one scene per step follows, and a recap ties the steps
+ * together - as a cycle when the notes describe one.
+ */
+function animation(title, items, newArtifact, conceptText) {
+  const steps = items.slice(0, 5);
+  if (steps.length < 2) steps.push({ label: "Why it matters", detail: `What ${title} changes, in one line.` });
+  const looping = /\b(cycle|loop|repeat|again|circular)\b/i.test(conceptText);
+
+  const intro = {
+    title,
+    narration: `What ${title} is about, in ${steps.length + 2} short scenes.`,
+    layout: "focus",
+    elements: [
+      box("topic", title, "💡", 0, "coral", "highlight"),
+      ...steps.slice(0, 4).map((step, i) => box(`p${i}`, step.label, SCENE_EMOJI[(i + 1) % SCENE_EMOJI.length], 1 + i * 0.5, ELEMENT_COLORS[i % 3])),
+    ],
+  };
+  const middle = steps.map((step, i) => {
+    // What the step leads to: the first part of its sentence that isn't the label itself.
+    const detail = subPoints(step.detail).find((point) => point.toLowerCase() !== step.label.toLowerCase());
+    const icon = SCENE_EMOJI[(i + 1) % SCENE_EMOJI.length];
+    return {
+      title: step.label,
+      narration: step.detail,
+      layout: "steps",
+      elements: detail
+        ? [box("main", step.label, icon, 0.3, ELEMENT_COLORS[i % 3]), box("result", detail, "", 1.6, ELEMENT_COLORS[(i + 1) % 3], "highlight"), arrow("link", "main", "result", "leads to", 1)]
+        : [box("main", step.label, icon, 0.3, ELEMENT_COLORS[i % 3], "highlight")],
+    };
+  });
+  const recapSteps = steps.slice(0, looping ? 5 : 4);
+  const recap = {
+    title: looping ? "And round again" : "All together",
+    narration: looping ? `Each step leads to the next, and ${title} starts over.` : `The key steps of ${title}, in order.`,
+    layout: looping ? "cycle" : "steps",
+    elements: [
+      ...recapSteps.map((step, i) => box(`r${i}`, step.label, SCENE_EMOJI[(i + 1) % SCENE_EMOJI.length], i * 0.6, ELEMENT_COLORS[i % 3])),
+      ...recapSteps.slice(0, -1).map((_, i) => arrow(`ra${i}`, `r${i}`, `r${i + 1}`, "", 0.4 + i * 0.6)),
+      ...(looping ? [arrow("back", `r${recapSteps.length - 1}`, "r0", "", recapSteps.length * 0.6)] : []),
+    ],
+  };
+
+  const beats = [intro, ...middle, recap];
+  const scenes = beats.map((beat, i) => {
+    const longestEntry = Math.max(...beat.elements.map((el) => el.enterAtSeconds));
+    const duration = Math.min(10, Math.max(5, Math.ceil(longestEntry + 2.5), Math.round(beat.narration.split(/\s+/).length / 2.5)));
+    return {
+      id: `s${i}`,
+      order: i + 1,
+      title: beat.title,
+      narration: beat.narration,
+      durationSeconds: duration,
+      transitionToNext: i === beats.length - 1 ? "none" : ["fade", "slide", "wipe", "zoom"][i % 4],
+      layout: beat.layout,
+      visualElements: beat.elements,
+      needsVisualAsset: false,
+      visualPrompt: "",
+      assetArtifactIds: [],
+    };
+  });
+  return { type: "animation", version: 2, scenes, videoArtifactId: "" };
+}
+
+function illustration(title, items, newArtifact) {
+  // The demo's artwork is abstract, so labels are spread around the centre rather than placed on real parts.
+  const spots = [[0.3, 0.32], [0.7, 0.3], [0.72, 0.68], [0.28, 0.7], [0.5, 0.5]];
+  const labels = items.slice(0, 4).map((f, i) => ({
+    id: `l${i}`,
+    text: f.label,
+    explanation: f.detail,
+    x: spots[i][0],
+    y: spots[i][1],
   }));
-  return { type: "animation", version: 1, scenes };
+  return {
+    type: "image",
+    version: 2,
+    imagePrompt: `A clean educational illustration of ${title}, plain light background, no text or labels.`,
+    artifactId: newArtifact(title),
+    altText: `Illustration of ${title}.`,
+    labels,
+  };
 }
 
 /**
@@ -166,11 +257,10 @@ export function visualize(conceptText, preferredType, newArtifact, variant = 0) 
   const summary = sentences(conceptText).find((s) => s.toLowerCase() !== title.toLowerCase()) ?? `A visual overview of ${title}.`;
 
   let visualization;
-  if (type === "diagram") visualization = diagram(ordered);
-  else if (type === "animation") visualization = animation(title, ordered, newArtifact);
-  else if (type === "image") {
-    visualization = { type: "image", version: 1, imagePrompt: `${title}, flat illustration`, artifactId: newArtifact(title), altText: `Illustration of ${title}.` };
-  } else visualization = mindMap(title, ordered, variant);
+  if (type === "diagram") visualization = diagram(title, ordered);
+  else if (type === "animation") visualization = animation(title, ordered, newArtifact, conceptText);
+  else if (type === "image") visualization = illustration(title, ordered, newArtifact);
+  else visualization = mindMap(title, ordered);
 
   return { title, summary, visualizationType: type, visualization };
 }

@@ -7,3 +7,5 @@ export { useRelatedConcepts } from "./hooks/useRelatedConcepts.js";
 export { default as RelatedConceptsPanel } from "./components/RelatedConceptsPanel.jsx";
 export { useConceptNotes } from "./hooks/useConceptNotes.js";
 export { default as ConceptNotesPanel } from "./components/ConceptNotesPanel.jsx";
+export { ConceptSidebar } from "./components/ConceptSidebar.jsx";
+export { default as SourceNotesPanel } from "./components/SourceNotesPanel.jsx";

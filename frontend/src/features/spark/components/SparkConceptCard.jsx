@@ -1,4 +1,4 @@
-import { folderColorClass } from "../../../shared/constants/folderColors.js";
+import { folderColorClass, folderColorStyle } from "../../../shared/constants/folderColors.js";
 import { visualizationTypeLabel } from "../../../shared/constants/visualizationTypes.js";
 import { useNarration } from "../../../shared/narration";
 import { SvgIcon } from "../../../shared/ui";
@@ -22,7 +22,7 @@ export default function SparkConceptCard({ concept, revealed, loading, onReveal,
   }
 
   return (
-    <article className={cx("spark-card", folderColorClass(concept.folderColor), revealed && "is-revealed")}>
+    <article className={cx("spark-card", folderColorClass(concept.folderColor), revealed && "is-revealed")} style={folderColorStyle(concept.folderColor)}>
       <span className="spark-card-band" aria-hidden="true" />
       <header className="spark-card-meta">
         <span className="spark-card-type">{visualizationTypeLabel(concept.visualizationType)}</span>

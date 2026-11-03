@@ -26,6 +26,7 @@ export function mapConceptVersion(json) {
     visualizationType: json.visualizationType,
     visualization: mapVisualizationPayload(json.visualization),
     createdAt: json.createdAt,
+    sourceText: json.sourceText ?? null,
   };
 }
 

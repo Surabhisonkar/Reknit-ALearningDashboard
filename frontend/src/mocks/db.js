@@ -6,9 +6,15 @@ import { createSeedState } from "./seed.js";
  * is guarded - private windows and blocked site data fall back to an
  * in-memory copy that simply starts fresh each load.
  */
-const STORAGE_KEY = "reknit-demo-db-v1";
+// Bumped whenever the seed library changes, so returning visitors get the new one.
+const STORAGE_KEY = "reknit-demo-db-v2";
 
 function load() {
+  try {
+    localStorage.removeItem("reknit-demo-db-v1"); // the previous seed library
+  } catch {
+    // storage blocked - nothing to clean up
+  }
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
